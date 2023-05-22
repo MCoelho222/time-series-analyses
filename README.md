@@ -44,12 +44,12 @@ python c:/Users/mcoel/OneDrive/Github/time-series-analyses/time_series_analyses/
 
 ## Time series
 
-![TimeSeries]('/time_series_analyses/example_plots/original_ts.png')
+![TimeSeries]('time_series_analyses/example_plots/original_ts.png')
 
 ## Boxplots evolution
 
-![BoxplotEvolution]('/time_series_analyses/example_plots/boxplot_evolution.png')
+![BoxplotEvolution]('time_series_analyses/example_plots/boxplot_evolution.png')
 
 ## RHIS
 
-![RHISEvolution]('/time_series_analyses/example_plots/representativeness_evolution.png')
+![RHISEvolution]('time_series_analyses/example_plots/representativeness_evolution.png')
