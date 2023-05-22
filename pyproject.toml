@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "time-series-analyses"
+version = "0.1.0"
+description = ""
+authors = ["Marcelo Coelho <92119579+MCoelho222@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "time_series_analyses"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+scipy = "^1.10.1"
+pandas = "^2.0.1"
+matplotlib = "^3.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
