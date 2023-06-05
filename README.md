@@ -37,7 +37,7 @@ poetry config --local virtualenvs.in-project true
 poetry install
 ```
 ```
-python ../time-series-analyses/time_series_analyses/main.py
+python ../time_series_analyses/main.py
 ```
 
 # Example
