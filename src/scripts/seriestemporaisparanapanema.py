@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import os
 import textwrap
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib import rcParams
-from statistical_evolution import slices2evol, evolrhis
-
+from statistical_evolution import evolrhis, slices2evol
 
 rcParams['lines.linewidth'] = 0.5
 rcParams['font.family'] = 'sans-serif'

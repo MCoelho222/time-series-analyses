@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats.mstats as mst
-from scripts.duration_curves import dsc #, asc
-from time_series_analyses.hypothesis_tests.non_parametric import NonParametric
+
+from rhis_timeseries.hypothesis_tests.non_parametric import NonParametric
+from rhis_timeseries.scripts.duration_curves import dsc  #, asc
 
 
-def ts_for_bxp(ts, interval):    
+def ts_for_bxp(ts, interval):
     ts1 = []
     for i in range(len(ts)):
         ts2 = np.array(ts[i])
@@ -26,7 +29,7 @@ def bxp_evol(ts, interval):
         ts3 = ts2
     slices = []
     for k in range(len(ts3) - 4):
-        slices.append(ts3[:k + 5])    
+        slices.append(ts3[:k + 5])
     bp = plt.boxplot(slices, patch_artist=True, showfliers=True, showmeans=False)
     plt.setp(bp['boxes'], color='0.8')
     plt.setp(bp['whiskers'], color='k', linestyle='-')
@@ -340,7 +343,7 @@ def slices2evol(ts, start):
     return slices
 
 
-def evolrhis(slices, stat):  
+def evolrhis(slices, stat):
     if stat == 'randomness':
         d = []
         for i in range(len(slices)):
@@ -397,10 +400,10 @@ def evolpercentile(slices, percentile):
         for i in range(len(slices)):
             q5.append(np.percentile(slices[i], 95))
         return q5
-    
+
 
 if __name__ == "__main__":
-    
+
     x = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(30., 200., 30))]
     ts = ts_for_bxp(x, 'all')
     ts1 = np.concatenate((ts[0], ts[1]))
@@ -416,7 +419,7 @@ if __name__ == "__main__":
     plt.title("Boxplot Evolution")
     plt.tight_layout()
     plt.show()
-    
+
     slices = slices2evol(ts1, 10)
     trend_evol = evolrhis(slices, 'stationarity')
     homo_evol = evolrhis(slices, 'homogeneity')

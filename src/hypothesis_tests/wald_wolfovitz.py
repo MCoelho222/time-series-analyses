@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+from collections import namedtuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sts
-import matplotlib.pyplot as plt
-from collections import namedtuple
 
 
 def waldwolf_test(ts):

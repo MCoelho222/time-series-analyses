@@ -1,10 +1,14 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from os.path import dirname, abspath, join
-from time_series_analyses.scripts.statistical_evolution import slices2evol, evolrhis, bxp_evol, ts_for_bxp
+from __future__ import annotations
 
-if __name__ == "__main__":
-    
+from os.path import abspath, dirname, join
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from rhis_timeseries.scripts.statistical_evolution import bxp_evol, evolrhis, slices2evol, ts_for_bxp
+
+
+def main():
     ROOTPATH = dirname(abspath(__file__))
     EXAMPLE_PLOTS = join(ROOTPATH, "example_plots/")
 
@@ -25,7 +29,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(f"{EXAMPLE_PLOTS}boxplot_evolution.png")
     plt.show()
-    
+
     slices = slices2evol(ts1, 10)
     trend_evol = evolrhis(slices, 'stationarity')
     homo_evol = evolrhis(slices, 'homogeneity')
@@ -46,3 +50,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(f"{EXAMPLE_PLOTS}representativeness_evolution.png")
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

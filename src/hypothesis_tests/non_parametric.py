@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+from collections import namedtuple
+
 import numpy as np
 import scipy.stats as sts
-from collections import namedtuple
+
 
 class NonParametric():
 
@@ -40,7 +44,8 @@ class NonParametric():
 
     @staticmethod
     def mwhitney_test(ts, alpha=0.05):
-        """-------------------------------------------------------------
+        """
+        ----------------------------------------------------------------
         OBJECTIVE => It compares two groups of data
         ----------------------------------------------------------------
         PARAMS
@@ -61,7 +66,8 @@ class NonParametric():
                         'ts1 < ts2': bool
                     }
         }
-        ------------------------------------------------------------"""
+        ----------------------------------------------------------------
+        """
         data = ts
         if isinstance(ts, dict):
             ts_keys = list(ts.keys())
@@ -175,7 +181,7 @@ class NonParametric():
             f'H2: {smaller} > {bigger}': True if p <= alpha and z > 0 else False}
 
         Results = namedtuple('Mann_Whitney', ['z', 'p_value'])
-        
+
         return {'stats': Results(z, p), 'decision': decision}
 
 

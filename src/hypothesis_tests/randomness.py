@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from collections import namedtuple
+
 import numpy as np
 import scipy.stats as sts
-from collections import namedtuple
 
 
 def runstest(ts):

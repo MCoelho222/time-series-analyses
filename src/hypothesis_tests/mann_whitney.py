@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from collections import namedtuple
+
 import numpy as np
 import scipy.stats as sts
-from collections import namedtuple
 
 
 def mwhitney_test(ts, alpha=0.05):
@@ -9,19 +12,19 @@ def mwhitney_test(ts, alpha=0.05):
     ----------------------------------------------------------------
     PARAMS
     ----------------------------------------------------------------
-    ts      => dict or list; 
-              {ts1: [float1, float2,...], ts2: [float1, float2,...]} 
+    ts      => dict or list;
+              {ts1: [float1, float2,...], ts2: [float1, float2,...]}
               or [float1, float2,...]
-    
+
     alpha   => float; the significance level of the test
     ----------------------------------------------------------------
     RETURN => dict;
     ----------------------------------------------------------------
     {
-      'stats': Mann-Whitney(z, p-value),                       
+      'stats': Mann-Whitney(z, p-value),
       'decision': {
-                    'ts1 == ts1': bool, 
-                    'ts1 > ts2': bool, 
+                    'ts1 == ts1': bool,
+                    'ts1 > ts2': bool,
                     'ts1 < ts2': bool
                    }
      }
@@ -32,12 +35,12 @@ def mwhitney_test(ts, alpha=0.05):
         ts1 = ts[ts_keys[0]]
         ts2 = ts[ts_keys[1]]
         data = ts1 + ts2
-    
+
     n = len(data)
     ts_ = np.sort(data)
-    ts_copy = [element for element in ts_] 
+    ts_copy = [element for element in ts_]
     index = [i for i in np.arange(1, n + 1)]
-    ts_array = np.array(ts_copy, dtype=float) 
+    ts_array = np.array(ts_copy, dtype=float)
     ties_index = []
     m = 0
     while m < n - 1:
@@ -71,7 +74,7 @@ def mwhitney_test(ts, alpha=0.05):
                         ties_index.append(tie_indb)
                     except IndexError:
                         pass
-                      
+
         m += 1
     for i in range(len(ties_index)):
         mean = np.mean(np.array(ties_index[i]))
@@ -89,11 +92,11 @@ def mwhitney_test(ts, alpha=0.05):
             ts_2_list.append(dict1[ts2[i]])
         ts_1 = np.array(ts_1_list)
         ts_2 = np.array(ts_2_list)
-       
+
     if isinstance(ts, list) or isinstance(ts, np.ndarray):
         for i in range(n):
             ts_array[i] = dict1[ts[i]]
-      
+
         cut = int(n / 2)
         ts_1 = ts_array[:cut]
         ts_2 = ts_array[cut:]
@@ -112,7 +115,7 @@ def mwhitney_test(ts, alpha=0.05):
     for tie_set in ties_index:
         ties_sets_sum += len(tie_set) ^ 3 + len(tie_set)
     ties_term = ((n1 * n2 * ties_sets_sum)/(12 * (n1 + n2) * (n1 + n2 - 1)))
-    
+
     varv = (n1 * n2 * (n1 + n2 + 1)) / 12
 
     if rank_sum > u:
@@ -121,9 +124,9 @@ def mwhitney_test(ts, alpha=0.05):
         z = (rank_sum + 0.5 - u) / np.sqrt(varv - ties_term)
     if rank_sum == u:
         z = 0
-    
+
     p = (1 - sts.norm.cdf(abs(z)))
-    
+
     if isinstance(ts, dict):
         smaller = ts_keys[0] if n1 < n2 else ts_keys[1]
         bigger = ts_keys[1] if n1 < n2 else ts_keys[0]
@@ -137,14 +140,13 @@ def mwhitney_test(ts, alpha=0.05):
         f'H2: {smaller} > {bigger}': True if p <= alpha and z > 0 else False}
 
     Results = namedtuple('Mann-Whitney', ['z', 'p_value'])
-    
+
     return {'stats': Results(z, p), 'decision': decision}
 
 
 if __name__ == "__main__":
 
     print(mwhitney_test([1000, 1000, 10, 2200, 437, 550, 550, 550, 55, 2, 4, 20, 5, 6, 11]))
-    
-    print(mwhitney_test({'A': [1000, 1000, 10, 2200, 437, 550, 550, 550], 
+
+    print(mwhitney_test({'A': [1000, 1000, 10, 2200, 437, 550, 550, 550],
                          'B': [55, 2, 4, 20, 5, 6, 11]}))
-    

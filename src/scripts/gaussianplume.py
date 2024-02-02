@@ -1,6 +1,8 @@
-import numpy as np
+from __future__ import annotations
+
 import math
 
+import numpy as np
 
 
 def plume3d(mass, wind, dist, height, dz, dy, alpha):
