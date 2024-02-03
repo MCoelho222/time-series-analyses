@@ -1,5 +1,5 @@
 [project]
-name = "rhis-timeseries"
+name = "rhis_timeseries"
 description = "Methods for representativeness checking in times series"
 authors = [{name = "Marcelo Coelho", email = "mcoelho2011@hotmail.com"}]
 requires-python = ">=3.8"
@@ -36,9 +36,6 @@ requires = [
   [tool.setuptools.dynamic.optional-dependencies]
     dev = {file = "requirements/requirements-dev.txt"}
     docs = {file = "requirements/requirements-docs.txt"}
-
-  [tool.setuptools.package-dir]
-    rhis_timeseries = "src"
 
 [tool.distutils.bdist_wheel]
   universal = true
