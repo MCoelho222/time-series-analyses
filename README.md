@@ -42,28 +42,28 @@ If you are interested, please check the article below.
 
 [Uncertainty analysis in the detection of trends, cycles, and shifts in water resources time series](https://link.springer.com/article/10.1007/s11269-019-02210-1)
 
-# Run these to see an example
+# Run to see an example
 
 ```
-poetry config --local virtualenvs.in-project true
+python -m venv .venv
 ```
 ```
-poetry install
+pip install -e .[dev]
 ```
 ```
-python ../time_series_analyses/main.py
+rhis-ts
 ```
 
 # Example
 
 ## Time series
 
-![TimeSeries](time_series_analyses/example_plots/original_ts.png)
+![TimeSeries](src/rhis_timeseries/example_plots/original_ts.png)
 
 ## Boxplots evolution
 
-![BoxplotEvolution](time_series_analyses/example_plots/boxplot_evolution.png)
+![BoxplotEvolution](src/rhis_timeseries/example_plots/boxplot_evolution.png)
 
 ## RHIS
 
-![RHISEvolution](time_series_analyses/example_plots/representativeness_evolution.png)
+![RHISEvolution](src/rhis_timeseries/example_plots/representativeness_evolution.png)

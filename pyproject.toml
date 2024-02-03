@@ -41,7 +41,7 @@ requires = [
   universal = true
 
 [project.scripts]
-rhis = "rhis_timeseries:__main__.main"
+rhis-ts = "rhis_timeseries:__main__.main"
 
 [tool.ruff]
   line-length = 128
