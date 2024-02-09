@@ -5,32 +5,33 @@ from os.path import abspath, dirname, join
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rhis_timeseries.scripts.statistical_evolution import bxp_evol, evolrhis, slices2evol, ts_for_bxp
+from rhis_timeseries.scripts.statistical_evolution import evolrhis
+from rhis_timeseries.utils.evolution import slices2evol
+from rhis_timeseries.utils.plots import bxp_evol
 
 
 def main():
     ROOTPATH = dirname(abspath(__file__))
     EXAMPLE_PLOTS = join(ROOTPATH, "example_plots/")
 
-    x = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(30., 200., 30))]
-    ts = ts_for_bxp(x, 'all')
-    ts1 = np.concatenate((ts[0], ts[1]))
+    dataset = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(50., 200., 30))]  # noqa: NPY002
+    ts = np.concatenate((dataset[0], dataset[1]))
 
     plt.figure(figsize=(8, 6))
-    plt.plot(ts1)
+    plt.plot(ts)
     plt.title("Original timeseries")
     plt.tight_layout()
     plt.savefig(f"{EXAMPLE_PLOTS}original_ts.png")
     plt.show()
 
     plt.figure(figsize=(20, 6))
-    bxp_evol(ts1, 'all')
+    bxp_evol(ts)
     plt.title("Boxplot Evolution")
     plt.tight_layout()
     plt.savefig(f"{EXAMPLE_PLOTS}boxplot_evolution.png")
     plt.show()
 
-    slices = slices2evol(ts1, 10)
+    slices = slices2evol(ts, 10)
     trend_evol = evolrhis(slices, 'stationarity')
     homo_evol = evolrhis(slices, 'homogeneity')
     ind_evol = evolrhis(slices, 'independence')

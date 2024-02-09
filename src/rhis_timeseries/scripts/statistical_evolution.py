@@ -6,35 +6,8 @@ import scipy.stats.mstats as mst
 
 from rhis_timeseries.hypothesis_tests.non_parametric import NonParametric
 from rhis_timeseries.scripts.duration_curves import dsc  #, asc
-
-
-def ts_for_bxp(ts, interval):
-    ts1 = []
-    for i in range(len(ts)):
-        ts2 = np.array(ts[i])
-        ts3 = ts2[ts2 > 0]
-        try:
-            ts1.append(ts3[interval[0]:-interval[1]])
-        except TypeError:
-            ts1.append(ts3)
-    return ts1
-
-
-def bxp_evol(ts, interval):
-    ts1 = np.array(ts)
-    ts2 = ts1[ts1 > 0]
-    try:
-        ts3 = ts2[interval[0]:-interval[1]]
-    except TypeError:
-        ts3 = ts2
-    slices = []
-    for k in range(len(ts3) - 4):
-        slices.append(ts3[:k + 5])
-    bp = plt.boxplot(slices, patch_artist=True, showfliers=True, showmeans=False)
-    plt.setp(bp['boxes'], color='0.8')
-    plt.setp(bp['whiskers'], color='k', linestyle='-')
-    plt.setp(bp['fliers'], color='k', marker='+')
-    plt.setp(bp['medians'], color='k')
+from rhis_timeseries.utils.evolution import slices2evol
+from rhis_timeseries.utils.plots import boxplot_evol
 
 
 def medians_evol(ts, interval):
@@ -335,12 +308,7 @@ def evol(stat, element, ts, interval, clean):
         return dsc_perms
 
 
-def slices2evol(ts, start):
-    ts1 = np.array(ts)
-    slices = []
-    for i in range(len(ts1) - (start - 1)):
-        slices.append(ts1[:i + start])
-    return slices
+
 
 
 def evolrhis(slices, stat):
@@ -404,8 +372,7 @@ def evolpercentile(slices, percentile):
 
 if __name__ == "__main__":
 
-    x = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(30., 200., 30))]
-    ts = ts_for_bxp(x, 'all')
+    ts = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(30., 200., 30))]  # noqa: NPY002
     ts1 = np.concatenate((ts[0], ts[1]))
 
     plt.figure(figsize=(8, 6))
@@ -415,7 +382,7 @@ if __name__ == "__main__":
     plt.show()
 
     plt.figure(figsize=(20, 6))
-    bxp_evol(ts1, 'all')
+    boxplot_evol(ts1)
     plt.title("Boxplot Evolution")
     plt.tight_layout()
     plt.show()
