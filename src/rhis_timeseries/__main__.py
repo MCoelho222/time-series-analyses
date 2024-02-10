@@ -5,9 +5,9 @@ from os.path import abspath, dirname, join
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rhis_timeseries.scripts.statistical_evolution import evolrhis
-from rhis_timeseries.utils.evolution import slices2evol
-from rhis_timeseries.utils.plots import bxp_evol
+from rhis_timeseries.evolution.data import slices2evol
+from rhis_timeseries.evolution.plots import boxplot_evolution_plot
+from rhis_timeseries.evolution.rhis import rhis_evol
 
 
 def main():
@@ -25,27 +25,28 @@ def main():
     plt.show()
 
     plt.figure(figsize=(20, 6))
-    bxp_evol(ts)
+    boxplot_evolution_plot(ts, 5)
     plt.title("Boxplot Evolution")
     plt.tight_layout()
     plt.savefig(f"{EXAMPLE_PLOTS}boxplot_evolution.png")
     plt.show()
 
     slices = slices2evol(ts, 10)
-    trend_evol = evolrhis(slices, 'stationarity')
-    homo_evol = evolrhis(slices, 'homogeneity')
-    ind_evol = evolrhis(slices, 'independence')
-    rand_evol = evolrhis(slices, 'randomness')
+
+    evol_rhis = rhis_evol(slices)
 
     plt.figure(figsize=(20, 6))
-    plt.plot(trend_evol, label='Stationarity', color='m')
-    plt.plot(homo_evol, label='Homogeneity', color='k')
-    plt.plot(ind_evol, label='Independence', color='blue')
-    plt.plot(rand_evol, label='Randomness', color='0.8')
-    plt.plot(0.05 * np.ones(len(trend_evol)), color='red')
+
+    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+
+    for hyp in hyps:
+        ts = evol_rhis[hyp]
+        plt.plot(ts, label=hyp)
+
+    plt.plot(0.05 * np.ones(len(slices)), color='red')
     plt.legend()
     plt.ylabel('p-value')
-    plt.xlim(0, len(trend_evol))
+    plt.xlim(0, len(slices))
     plt.ylim(0, 1)
     plt.title("Representativeness Evolution")
     plt.tight_layout()
