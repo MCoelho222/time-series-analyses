@@ -8,6 +8,7 @@ from rhis_timeseries.hypothesis_tests.non_parametric import NonParametric
 
 
 def rhis_evol(slices):
+    """"""
     evol_rhis = {
         'randomness': [],
         'homogeneity': [],

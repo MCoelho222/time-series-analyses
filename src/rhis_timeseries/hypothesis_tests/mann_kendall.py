@@ -1,43 +1,45 @@
 from __future__ import annotations
 
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sts
 
+if TYPE_CHECKING:
+    from rhis_timeseries.types.hypothesis_types import TestResults
 
-def mann_kendall_test(tseries):
-    y1 = np.array(tseries)
 
-    y2 = y1[y1 == y1**1]
-    n = len(y2)
+def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResults:
+
+    n = len(ts)
 
     signs = []
-
     for i in range(n - 1):
-        s = y2 - y2[i]
+        s = ts - ts[i]
         signs.extend(np.sign(s[i + 1:]))
-    signs1 = np.array(signs)
-    S = float(len(signs1[signs1 > 0]) - len(signs1[signs1 < 0]))
+
+    signs_array = np.array(signs)
+
+    test_s = float(len(signs_array[signs_array > 0]) - len(signs_array[signs_array < 0]))
+
     sigma = ((n/18.)*(n - 1.)*(2.*n + 5.))**0.5
 
-    if S > 0.:
-        z = abs((S - 1.)/sigma)
-    if S == 0.:
-        z = 0.
-    if S < 0.:
-        z = abs((S + 1.)/sigma)
+    condition_value = 0.
+
+    if test_s > condition_value:
+        z = abs((test_s - 1.)/sigma)
+    if test_s == condition_value:
+        z = condition_value
+    if test_s < condition_value:
+        z = abs((test_s + 1.)/sigma)
 
     p = 2*(1 - sts.norm.cdf(z))
 
-    if z < 1.96:
-        decision = -1
-    if z >= 1.96:
-        decision = 1
+    Results = namedtuple('Mann_Kendall', ['z', 'p_value'])  # noqa: PYI024
 
-    Results = namedtuple('Mann_Kendall', ['z', 'p_value'])
-    return {'stats': Results(z, p), 'decision': decision}
+    return Results(z, p)
 
 
 if __name__ == "__main__":

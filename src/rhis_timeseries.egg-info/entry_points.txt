@@ -1,2 +1,2 @@
 [console_scripts]
-rhis = rhis_timeseries:__main__.main
+rhis-ts = rhis_timeseries:__main__.main

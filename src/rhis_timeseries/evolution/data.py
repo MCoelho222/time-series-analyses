@@ -1,9 +1,12 @@
 """Methods for evolution insights."""
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
 from rhis_timeseries.errors.exception import handle_exception_msg
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def slices2evol(ts: list[int | float] | np.ndarray, start: int) -> list[list[int | float]]:
