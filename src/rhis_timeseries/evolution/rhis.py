@@ -23,6 +23,10 @@ def rhis_evol(slices):
         whit = NonParametric.mwhitney_test(ts)
         wald = NonParametric.waldwolf_test(ts)
         mann = NonParametric.mann_kendall_test(ts)
+        # runs = NonParametric.runstest(ts)
+        # whit = NonParametric.mwhitney_test(ts)
+        # wald = NonParametric.waldwolf_test(ts)
+        # mann = NonParametric.mann_kendall_test(ts)
 
         rhis = {
             'randomness': runs,

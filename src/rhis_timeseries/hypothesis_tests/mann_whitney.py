@@ -13,11 +13,12 @@ if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
 
 
-def mann_whitney_test(a: list[int | float], b: list[int | float], alpha: float=0.05) -> dict[str, float | TestResults]:  # noqa: C901
+def mann_whitney_u(a: list[int | float], b: list[int | float]) -> dict[str, float | TestResults]:
     """
-    Compare if two groups of data has equal medians.
+    Compare two independent groups of data.
 
-    Assumes homoscedasticity.
+    The Mann-Whitney test is also known as The Rank-Sum test or Wilcoxon Rank-Sum.
+    This test assumes homoscedasticity and independent groups.
 
     Parameters
     ----------
@@ -25,41 +26,24 @@ def mann_whitney_test(a: list[int | float], b: list[int | float], alpha: float=0
             A list of floats or integers.
         b
             A list of floats or integers.
-        alpha
-            The significance level of the test.
 
     Returns
     -------
-        {
-            'stats': Mann-Whitney(z, p-value),
-            'decision': {
-                            'ts1 == ts1': bool,
-                            'ts1 > ts2': bool,
-                            'ts1 < ts2': bool
-                        }
-        }
+        Mann-Whitney(statistic, p-value). This p-value refers to the one-sided test.
      """
     ts = a + b
-
     n = len(ts)
     ts_sorted = np.sort(ts)
-    ts_copy = ts_sorted[:]
     ranks = np.arange(1, n + 1).tolist()
-    ts_array = np.array(ts_copy, dtype=float)
+    ts_array = np.array(ts_sorted, dtype=float)
 
-    ties_index = ties_correction(ts_copy)
-
-    for i in range(len(ties_index)):
-        mean = np.mean(np.array(ties_index[i]))
-        for j in range(len(ties_index[i])):
-            ranks[ties_index[i][j] - 1] = mean
+    updated_ranks = ties_correction(ts_sorted)
 
     dict1 = {}
     for i in range(n):
-        dict1[ts_array[i]] = ranks[i]
-
+        dict1[ts_array[i]] = updated_ranks[i]
     for i in range(len(a)):
-        a[i] = dict1[b[i]]
+        a[i] = dict1[a[i]]
     for i in range(len(b)):
         b[i] = dict1[b[i]]
 
@@ -67,51 +51,58 @@ def mann_whitney_test(a: list[int | float], b: list[int | float], alpha: float=0
     n2 = len(b)
 
     if n1 < n2:
-        u = (n1 * (n1 + n2 + 1)) / 2
+        mean = (n1 * (n1 + n2 + 1)) / 2
         rank_sum = np.sum(a)
     else:
-        u = (n2 * (n1 + n2 + 1)) / 2
+        mean = (n2 * (n1 + n2 + 1)) / 2
         rank_sum = np.sum(b)
 
-    ties_sets_sum = 0
-    for tie_set in ties_index:
-        ties_sets_sum += len(tie_set) ^ 3 + len(tie_set)
-    ties_term = ((n1 * n2 * ties_sets_sum)/(12 * (n1 + n2) * (n1 + n2 - 1)))
+    square_sum_ranks = np.sum(np.array(updated_ranks) ** 2)
 
-    varv = (n1 * n2 * (n1 + n2 + 1)) / 12
+    var_no_ties = (n1 * n2 * (n1 + n2 + 1)) / 12
 
-    if rank_sum > u:
-        z = (rank_sum - 0.5 - u) / np.sqrt(varv - ties_term)
-    if rank_sum < u:
-        z = (rank_sum + 0.5 - u) / np.sqrt(varv - ties_term)
-    if rank_sum == u:
-        z = 0
+    var_ties = ((n1 * n2) / ((n1 + n2) * (n1 + n2 - 1))) * square_sum_ranks \
+        - ((n1 * n2 * (n1 + n2 + 1) ** 2) / (4 * (n1 + n2 - 1)))
 
-    p_value = (1 - sts.norm.cdf(abs(z)))
+    var = var_no_ties if updated_ranks == ranks else var_ties
 
-    smaller = '1st Half' if n1 < n2 else '2nd Half'
-    bigger = '2nd Half' if n1 < n2 else '1st Half'
+    if rank_sum > mean:
+        stat = (rank_sum - 0.5 - mean) / np.sqrt(var)
+    if rank_sum < mean:
+        stat = (rank_sum + 0.5 - mean) / np.sqrt(var)
+    if rank_sum == mean:
+        stat = 0
 
-    decision = {
-        f'H0: {smaller} == {bigger}': False if p_value * 2. <= alpha else True,
-        f'H1: {smaller} < {bigger}': True if p_value <= alpha and z < 0 else False,
-        f'H2: {smaller} > {bigger}': True if p_value <= alpha and z > 0 else False}
+    prob = sts.norm.cdf(abs(stat))
 
-    Results = namedtuple('Mann_Whitney', ['z', 'p_value'])  # noqa: PYI024
+    p_value = 1 - prob
 
-    return {'stats': Results(z, p_value), 'decision': decision}
+    Results = namedtuple('Mann_Whitney', ['statistic', 'p_value'])  # noqa: PYI024
+
+    return Results(stat, p_value)
 
 
 if __name__ == "__main__":
-    ts1 = [1000, 1000, 10, 2200, 437, 550]
-    ts2 = [550, 550, 55, 2, 4, 20, 5, 6, 11]
+    """
+    Example from the book Statistical Methods in Water Resources
+
+    Auhtor: Helsel & Hirsch
+    Year: 2002
+    Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
+
+    Chapter 5 - Differences between two independent groups
+    """
+    ts1 = [0.59, 0.87, 1.1, 1.1, 1.2, 1.3, 1.6, 1.7, 3.2, 4.0]
+    ts2 = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7]
+
     plt.figure(figsize=(8, 6))
-    plt.plot(ts1)
-    plt.plot(ts2)
+    plt.plot(ts1, label='ts1')
+    plt.plot(ts2, label='ts2')
+    plt.legend()
     plt.show()
-    mwhitney = mann_whitney_test(a=ts1, b=ts2)
-    print(mwhitney)
-    s_mann_1 = sts.mannwhitneyu(ts1, ts2)
+
+    mwhitney = mann_whitney_u(a=ts1, b=ts2)
     s_mann_2 = sts.mannwhitneyu(ts1, ts2, alternative='greater')
-    print(s_mann_1)
+
+    print(mwhitney)
     print(s_mann_2)

@@ -6,7 +6,7 @@ import numpy as np
 import scipy.stats as sts
 
 
-def runstest(ts):
+def runs_test(ts):
     """-----------------------------------------------------------------------
     FUNCTION         A test for randomness
     PARAMETERS       ts => 1D list or numpy array.
@@ -155,6 +155,6 @@ def wallismoore(ts, interval):
 
 if __name__ == "__main__":
     
-    ts = np.random.randint(0, 100, 100)
+    ts = [12, 10, 8, 9, 7, 5, 4, 6, 8, 10]
     print(ts)
-    print(runstest(ts))
+    print(runs_test(ts))

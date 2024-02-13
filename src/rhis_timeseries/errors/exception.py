@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
+import numpy as np
+from loguru import logger
+
 
 @dataclass(frozen=True)
 class Error:
@@ -41,3 +44,21 @@ def handle_exception_msg(exception: Exception, msg: str) -> Error:
             Includes the formatted error message, exception, type and details.
     """
     return Error.from_exception(exception, msg)
+
+def raise_timeseries_type_error(ts: list[int | float] | np.ndarray[int | float]) -> TypeError:
+    """Raise TypeError if at least one element is not of type integer or float.
+
+    Parameters
+    ----------
+        ts
+            A list of integers or floats.
+    """
+    if not isinstance(ts, (list, np.ndarray)):
+        logger.error('Parameter ts must be a list or numpy.ndarray.')
+        exc = 'Parameter ts must be a list or numpy.ndarray.'
+        raise TypeError(exc)
+
+    if not all(isinstance(element, int | float | np.integer | np.floating) for element in ts):
+        logger.error('The elements must be integers and/or floats.')
+        exc = 'The elements must be integers and/or floats.'
+        raise TypeError(exc)

@@ -4,6 +4,8 @@ from __future__ import annotations
 import numpy as np
 from loguru import logger
 
+from rhis_timeseries.errors.exception import raise_timeseries_type_error
+
 
 def get_ties_index(ts: list[int | float], start: int) -> list[int]:
     """
@@ -49,14 +51,21 @@ def ties_correction(ts: list[int | float] | np.ndarray[int | float]) -> list[lis
     -------
         A 2D list with ranks where ties are present.
     """
-    logger.debug('Correcting ties...')
+    raise_timeseries_type_error(ts)
+
+    logger.info('Checking for ties...')
+
     ts_sorted = np.sort(ts)
+    ranks = np.arange(1, len(ts_sorted) + 1).tolist()
+
     ties_index = []
+
     m = 0
     while m < len(ts) - 1:
         if m == 0: # Here the index n - 1 is not checked, as it doesn't exist
             tie_ind = get_ties_index(ts, m)
-            ties_index.append(tie_ind)
+            if len(tie_ind) > 0:
+                ties_index.append(tie_ind)
         if m > 0:
             if ts_sorted[m] == ts_sorted[m + 1]:
                 if ts_sorted[m] != ts_sorted[m - 1]: # indicates a new tie
@@ -64,11 +73,23 @@ def ties_correction(ts: list[int | float] | np.ndarray[int | float]) -> list[lis
                     new_tie_ind = get_ties_index(ts, new_index)
                     ties_index.append(new_tie_ind)
         m += 1
-    return ties_index
+
+    if len(ties_index) > 0:
+        logger.info('Applying correction for ties...')
+        for i in range(len(ties_index)):
+            mean = np.mean(np.array(ties_index[i]))
+            for j in range(len(ties_index[i])):
+                ranks[ties_index[i][j] - 1] = mean
+        logger.info('Correction for ties complete.')
+    else:
+        logger.info('No ties present.')
+
+    return ranks
+
 
 if __name__ == "__main__":
-    ties = [1, 1, 2, 3, 8, 23, 87, 55, 55, 1, 2, 4, 4]
-    ties = np.array(ties)
+    ties = [5, 1, 2, 3, 8, 23, 87, 54, 55, 1.5, 2.1, 4.3, 4]
+    # ties = np.array(ties)
     ties_correction = ties_correction(ties)
 
     print(ties_correction)
