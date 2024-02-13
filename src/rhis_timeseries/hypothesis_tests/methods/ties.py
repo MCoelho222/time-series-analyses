@@ -1,13 +1,18 @@
 """Methods for ties correction."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from loguru import logger
 
 from rhis_timeseries.errors.exception import raise_timeseries_type_error
 
+if TYPE_CHECKING:
+    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
-def get_ties_index(ts: list[int | float], start: int) -> list[int]:
+
+def get_ties_index(ts: TimeSeriesFlex, start: int) -> list[int | np.int32]:
     """
     Check if there equal numbers in sequence and get their ranks.
 
@@ -38,7 +43,7 @@ def get_ties_index(ts: list[int | float], start: int) -> list[int]:
     return tie_ranks
 
 
-def ties_correction(ts: list[int | float] | np.ndarray[int | float]) -> list[list[int | float]]:
+def ties_correction(ts: TimeSeriesFlex) -> list[list[int | float]]:
     """
     Apply correction for ties.
 
@@ -88,8 +93,8 @@ def ties_correction(ts: list[int | float] | np.ndarray[int | float]) -> list[lis
 
 
 if __name__ == "__main__":
-    ties = [5, 1, 2, 3, 8, 23, 87, 54, 55, 1.5, 2.1, 4.3, 4]
-    # ties = np.array(ties)
+    ties = [5, 1, 2.2, 2.2, 8, 23, 87, 54, 55, 1.5, 2.2, 4.3, 4]
+    ties = np.array(ties)
     ties_correction = ties_correction(ties)
 
     print(ties_correction)

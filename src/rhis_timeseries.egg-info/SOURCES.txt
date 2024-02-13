@@ -27,3 +27,4 @@ src/rhis_timeseries/scripts/duration_curves.py
 src/rhis_timeseries/scripts/gaussianplume.py
 src/rhis_timeseries/scripts/seriestemporaisparanapanema.py
 src/rhis_timeseries/types/hypothesis_types.py
+src/rhis_timeseries/types/timeseries_types.py
