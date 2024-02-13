@@ -96,13 +96,12 @@ if __name__ == "__main__":
     ts2 = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7]
 
     plt.figure(figsize=(8, 6))
-    plt.plot(ts1, label='ts1')
-    plt.plot(ts2, label='ts2')
+    plt.title('Nitrogen concentration in precipitation (mg/L)')
+    plt.plot(ts1, label='industrial site')
+    plt.plot(ts2, label='residential site')
     plt.legend()
     plt.show()
 
     mwhitney = mann_whitney_u(a=ts1, b=ts2)
-    s_mann_2 = sts.mannwhitneyu(ts1, ts2, alternative='greater')
 
     print(mwhitney)
-    print(s_mann_2)
