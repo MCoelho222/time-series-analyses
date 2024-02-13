@@ -6,5 +6,6 @@ from typing import NamedTuple
 
 class TestResults(NamedTuple):
     """Types for hypothesis test results."""
-    test_stat: float
+    statistic: float
     p_value: float
+    alternative: str
