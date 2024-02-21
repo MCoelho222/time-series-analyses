@@ -5,13 +5,15 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as sts
+
+from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
+    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
 
-def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResults:
+def mann_kendall_test(ts: TimeSeriesFlex, alternative: str = 'two-sided') -> TestResults:
 
     n = len(ts)
 
@@ -24,27 +26,28 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
 
     test_s = float(len(signs_array[signs_array > 0]) - len(signs_array[signs_array < 0]))
 
-    sigma = ((n/18.)*(n - 1.)*(2.*n + 5.))**0.5
+    sigma = ((n / 18.) * (n - 1.) * (2. * n + 5.)) ** 0.5
 
     condition_value = 0.
 
     if test_s > condition_value:
-        z = abs((test_s - 1.)/sigma)
+        z = (test_s - 1.) / sigma
     if test_s == condition_value:
         z = condition_value
     if test_s < condition_value:
-        z = abs((test_s + 1.)/sigma)
+        z = (test_s + 1.) / sigma
 
-    p = 2*(1 - sts.norm.cdf(z))
+    p_value = p_value_normal(z, alternative)
 
-    Results = namedtuple('Mann_Kendall', ['z', 'p_value'])  # noqa: PYI024
+    Results = namedtuple('Mann_Kendall', ['z', 'p_value', 'alternative'])  # noqa: PYI024
 
-    return Results(z, p)
+    return Results(z, p_value, alternative)
 
 
 if __name__ == "__main__":
 
-    ts = np.random.randint(0, 100, 100)
+    rng = np.random.default_rng(seed=42)
+    ts = rng.normal(loc=5, scale=2, size=10)
     print(ts)
     print(mann_kendall_test(ts))
 

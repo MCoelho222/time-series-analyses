@@ -14,7 +14,7 @@ class NonParametric():
 
         y2 = y1[y1 == y1**1]
         n = len(y2)
-        
+
         signs = []
 
         for i in range(n - 1):

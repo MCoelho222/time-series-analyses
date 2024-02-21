@@ -19,9 +19,10 @@ def p_value_normal(statistic: float, alternative: str) -> float:
         The p_value.
     """
     z = abs(statistic)
+    prob = sts.norm.cdf(z)
     if alternative in ('less', 'greater'):
-        p_value = 1 - sts.norm.cdf(z)
+        p_value = 1 - prob
     if alternative == 'two-sided':
-        p_value = 2 * (1 - sts.norm.cdf(z))
+        p_value = 2 * (1 - prob)
 
     return p_value

@@ -99,22 +99,24 @@ if __name__ == "__main__":
 
     Chapter 5 - Differences between two independent groups
     """
-    ts1 = [0.59, 0.87, 1.1, 1.1, 1.2, 1.3, 1.6, 1.7, 3.2, 4.0]
-    ts2 = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7]
+    ind = [0.59, 0.87, 1.1, 1.1, 1.2, 1.3, 1.6, 1.7, 3.2, 4.0]
+    res = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7]
 
     plt.figure(figsize=(8, 6))
     plt.title('Nitrogen concentration in precipitation (mg/L)')
-    plt.plot(ts1, label='industrial site')
-    plt.plot(ts2, label='residential site')
+    plt.plot(ind, label='industrial site')
+    plt.plot(res, label='residential site')
     plt.legend()
     plt.show()
 
-    mwhitney_less = mann_whitney_u(a=ts1, b=ts2, alternative='less')
-    mwhitney_greater = mann_whitney_u(a=ts1, b=ts2, alternative='greater')
-    mwhitney_2sided = mann_whitney_u(a=ts1, b=ts2, alternative='two-sided')
-    scipy_mwhitney_less = sts.mannwhitneyu(ts1, ts2, alternative='less')
-    scipy_mwhitney_greater = sts.mannwhitneyu(ts1, ts2, alternative='greater')
-    scipy_mwhitney_2sided = sts.mannwhitneyu(ts1, ts2, alternative='two-sided')
+    mwhitney_less = mann_whitney_u(res, ind, alternative='less')
+    mwhitney_greater = mann_whitney_u(ind, res, alternative='greater')
+    mwhitney_2sided = mann_whitney_u(ind, res, alternative='two-sided')
+
+    scipy_mwhitney_less = sts.mannwhitneyu(res, ind, alternative='less')
+    scipy_mwhitney_greater = sts.mannwhitneyu(ind, res, alternative='greater')
+    scipy_mwhitney_2sided = sts.mannwhitneyu(ind, res, alternative='two-sided')
+
     print('LESS')
     print()
     print(mwhitney_less)
