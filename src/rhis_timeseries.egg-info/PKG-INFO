@@ -1,0 +1,91 @@
+Metadata-Version: 2.1
+Name: rhis_timeseries
+Version: 1.0.0
+Summary: Methods for representativeness checking in times series
+Author-email: Marcelo Coelho <mcoelho2011@hotmail.com>
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: loguru
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: scipy
+Provides-Extra: dev
+Requires-Dist: covdefaults; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Provides-Extra: docs
+
+# Time Series Representativeness (RHIS)
+
+This repository presents four methods for the detection of variability patterns in time series. Essentially, it is checked if the time series are compliant with the basic assumptions for statistical representativeness, i. e., to be able for the application of statistical methods for frequency analysis, a time series must be compliant with the hypothesis of randomness, homogeneity, independence and stationarity (RHIS). In other words, the methods check if all sample data comes from the same population.
+
+Basically, there are three patterns that can make the RHIS hypotheses to be rejected:
+
+* **Trends**
+* **Seasonality**
+* **Shifts**
+
+In the context of water resources management, for example, the continuous and uncontrolled urban expansion process in the cities makes the waters from rain to reach the river channel each time faster due to waterproofing of the soil. So, the streamflow data becomes greater year after year characterizing a trend. When this is statistically confirmed, an strategy for data selection or treatment should be implemented.
+
+# Methods - Hypothesis (RHIS)
+
+* **Runs Test** - randomness
+* **Mann-Whitney** - homogeneity
+* **Wald-Wolfovitz** - independence
+* **Mann-Kendall** - stationarity (trend)
+
+# Randomness
+
+Briefly, the runs method checks if there are too many values above or below the median or if there is another pattern in the positioning of the values above and below the median. Randomness is rejected if a pattern is detected for a given significance level.
+
+# Homogeneity
+
+The homogeneity test check if the halves of the time series are statistically equal. Homogeneity is rejected if one of the halves is greater or smaller than the other, for a given significance level.
+
+# Independence
+
+A time series has dependency when a value influences the next. For example, if it rains a lot one day and it stops, the daily streamflow measurements of the next days will have a pattern, being each day higher while the underground water keeps flowing into the river, and the opposite when it stops flowing. Independece is rejected if this kind of pattern occur, for a given significance level.
+
+# Stationarity
+
+When a time series increase or decrease with time, it is said to be a non-stationary series if the hypothesis is rejected for a given significance level.
+
+
+# Scientific foundations
+
+These tests were used in my doctorate thesis to check the representativeness of water quality time series in the Alto Iguaçu Watershed in the south of Brazil.
+
+If you are interested, please check the article below.
+
+[Uncertainty analysis in the detection of trends, cycles, and shifts in water resources time series](https://link.springer.com/article/10.1007/s11269-019-02210-1)
+
+# Run to see an example
+
+```
+python -m venv .venv
+```
+```
+pip install -e .[dev]
+```
+```
+rhis-ts
+```
+
+# Example
+
+## Time series
+
+![TimeSeries](src/rhis_timeseries/example_plots/original_ts.png)
+
+## Boxplots evolution
+
+![BoxplotEvolution](src/rhis_timeseries/example_plots/boxplot_evolution.png)
+
+## RHIS
+
+![RHISEvolution](src/rhis_timeseries/example_plots/representativeness_evolution.png)

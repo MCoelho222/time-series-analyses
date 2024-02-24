@@ -1,0 +1,2 @@
+[console_scripts]
+rhis-ts = rhis_timeseries:__main__.main
