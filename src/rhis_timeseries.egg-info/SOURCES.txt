@@ -22,6 +22,7 @@ src/rhis_timeseries/hypothesis_tests/mann_whitney.py
 src/rhis_timeseries/hypothesis_tests/non_parametric.py
 src/rhis_timeseries/hypothesis_tests/randomness.py
 src/rhis_timeseries/hypothesis_tests/wald_wolfovitz.py
+src/rhis_timeseries/hypothesis_tests/methods/p_value.py
 src/rhis_timeseries/hypothesis_tests/methods/ties.py
 src/rhis_timeseries/scripts/duration_curves.py
 src/rhis_timeseries/scripts/gaussianplume.py
