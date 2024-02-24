@@ -1,9 +1,0 @@
-matplotlib
-numpy
-scipy
-
-[dev]
-covdefaults
-pytest
-
-[docs]
