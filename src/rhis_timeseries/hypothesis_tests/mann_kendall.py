@@ -24,7 +24,7 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
 
     test_s = float(len(signs_array[signs_array > 0]) - len(signs_array[signs_array < 0]))
 
-    sigma = ((n/18.)*(n - 1.)*(2.*n + 5.))**0.5
+    sigma = ((n / 18.) * (n - 1.) * (2. * n + 5.)) ** 0.5
 
     condition_value = 0.
 
@@ -35,7 +35,7 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
     if test_s < condition_value:
         z = abs((test_s + 1.)/sigma)
 
-    p = 2*(1 - sts.norm.cdf(z))
+    p = 2 * (1 - sts.norm.cdf(z))
 
     Results = namedtuple('Mann_Kendall', ['z', 'p_value'])  # noqa: PYI024
 
@@ -45,6 +45,7 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
 if __name__ == "__main__":
 
     ts = np.random.randint(0, 100, 100)
+
     print(ts)
     print(mann_kendall_test(ts))
 
