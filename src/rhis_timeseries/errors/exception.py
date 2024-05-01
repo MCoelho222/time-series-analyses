@@ -45,6 +45,7 @@ def handle_exception_msg(exception: Exception, msg: str) -> Error:
     """
     return Error.from_exception(exception, msg)
 
+
 def raise_timeseries_type_error(ts: list[int | float] | np.ndarray[int | float]) -> TypeError:
     """Raise TypeError if at least one element is not of type integer or float.
 
