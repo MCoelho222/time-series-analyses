@@ -56,7 +56,7 @@ rhis-ts
 
 # Example
 
-The RHIS tests were applied to increasing slices from a time series.
+The **RHIS** tests were applied to increasing slices from a time series.
 
 For example:
 
@@ -66,7 +66,7 @@ ts = [22, 10, 30, 4, 25, 12, 7]
 slices = [[22, 10, 30, 4, 25], [22, 10, 30, 4, 25, 12], [22, 10, 30, 4, 25, 12, 7]]
 ```
 
-The results from RHIS test would be like:
+The result is similar to this:
 
 ```py
 evol_rhis = {
@@ -77,11 +77,11 @@ evol_rhis = {
     }
 ```
 
-In this way, the first p-values are the result from rhis tests applied in the first 5 values of the time series, and the last p-values are the result from rhis tests applied in the entire time series.
+In this way, the first p-values are the result from the application of the **RHIS** tests in the first 5 values, and the last p-values are the result from the entire time series.
     
-In these example you can see a time series which has an up shift after the 80th value. So, it clearly shows that something has changed in the process that generates these data. So it would not be reasonable to estimate statistical parameters with the whole data, since two different populations might be present. In the boxplots you can see that the median, the 25th and 75th and higher percentiles are increasing from the 80th value. It shows that the whole population distribution is changing over time.
+In the example below, the time series has an upward shift after the 80th value. Clearly something has changed in the process that generates these data. In this situation, the estimation of statistical parameters with the whole data would not be reasonable, since two different populations might be present. The boxplot evolution shows that the median, the 25th, 75th and higher percentiles are increasing from the 80th value, changing the whole population distribution over time.
 
-The last graph confirms that indeed, the statictical characteristics of the population has changed after the 80th value. The homogeneity, independence and stationarity hypotheses are rejected right after this value. The p-values for these hypotheses goes to 0 after this point. Despite randomness was not rejected, it had a significant decrease. Anyway, the rejection of one of these 4 hypotheses is enough to conclude that the time series is no longer representative of only one population after this point.
+The last graph, which shows the evolution of the **RHIS** results, confirms that indeed, the statictical characteristics of the population has changed after the 80th value. The homogeneity, independence and stationarity hypotheses were rejected right after this point. The p-values go to 0. Despite randomness was not rejected, it had a significant decrease. Anyway, the rejection of just one of these 4 hypotheses is enough to conclude that the time series is no longer representative of only one population after this point.
 
 With that in mind, one should decide which part of the time series to use to calculate statistical parameters or make any inference analysis. It will depend on each ones objectives.
 
@@ -93,6 +93,6 @@ With that in mind, one should decide which part of the time series to use to cal
 
 ![BoxplotEvolution](src/rhis_timeseries/example_plots/boxplot_evolution.png)
 
-## RHIS
+## RHIS evolution
 
 ![RHISEvolution](src/rhis_timeseries/example_plots/representativeness_evolution.png)
