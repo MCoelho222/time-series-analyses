@@ -23,7 +23,7 @@ def waldwolf_test(ts):
         ts_index = np.array(ts_ind) # copy of original time series, array
         ties_index = []
         m = 0
-    
+
         while m < n - 1:
             if m == 0:
                 tie_ind = []
@@ -53,16 +53,16 @@ def waldwolf_test(ts):
                             tie_indb.append(tie_indb[-1] + 1.)
                             ties_index.append(tie_indb)
             m = m + 1
-    
+
         for i in range(len(ties_index)):
             mean = np.mean(np.array(ties_index[i]))
             for j in range(len(ties_index[i])):
-                index[int(ties_index[i][j]) - 1] = mean 
+                index[int(ties_index[i][j]) - 1] = mean
         dict1 = {}
         for i in range(n):
             dict1[ts_incr[i]] = index[i]
-        for i in range(n):    
-            ts_index[i] = dict1[ts_index[i]]   
+        for i in range(n):
+            ts_index[i] = dict1[ts_index[i]]
         ts4 = ts_index - np.mean(ts_index)
         n1 = float(len(ts4))
         r = np.sum(ts4[:-1]*ts4[1:]) + ts4[0]*ts4[-1]
@@ -85,17 +85,17 @@ def waldwolf_test(ts):
 
         Results = namedtuple('Wald_Wolfovitz', ['z', 'p_value'])
 
-        if var_r > 0:  
+        if var_r > 0:
             z = abs((r - e_r)/np.sqrt(var_r))
             p = 2*(1 - sts.norm.cdf(z))
-            
+
             if z < 1.96:
                 decision = -1
             if z >= 1.96:
-                decision = 1 
-    
+                decision = 1
+
             return {'stats': Results(z, p), 'decision': decision}
-    
+
         if var_r == 0 or var_r < 0:
             decision = 1
             return {'stats': Results(np.nan, 0.0), 'decision': decision}

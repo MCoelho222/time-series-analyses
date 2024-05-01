@@ -180,9 +180,7 @@ if __name__ == "__main__":
 
     print(runs_test(ts_discrete, alternative='two-sided'))
     print(runs_test(ts_discrete, alternative='less'))
-    print(runs_test(ts_discrete, alternative='greater'))
-    print()
-    print()
+    print(runs_test(ts_discrete, alternative='greater'), end='\n\n')
     print(wallismoore(ts_continuous, alternative='two-sided'))
     print(wallismoore(ts_continuous, alternative='less'))
     print(wallismoore(ts_continuous, alternative='greater'))
