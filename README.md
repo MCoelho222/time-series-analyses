@@ -48,6 +48,9 @@ If you are interested, please check the article below.
 python -m venv .venv
 ```
 ```
+.venv/scripts/activate
+```
+```
 pip install -e .[dev]
 ```
 ```
