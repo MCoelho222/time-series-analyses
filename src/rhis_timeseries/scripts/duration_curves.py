@@ -32,7 +32,6 @@ def asc(ts, interval, q_ref):
              (perm[index + 1] - perm[index])) + ts3_asc[index]
 
     return [cumul_freq, ts3_asc, q]
-    
 
 def dsc(ts, interval, q_ref):
     q_ref1 = float(q_ref)
@@ -63,10 +62,9 @@ def dsc(ts, interval, q_ref):
              (perm[index + 1] - perm[index])) + ts3_dsc[index]
 
     return [cumul_freq, ts3_dsc, q]
-    
-    
+
 if __name__ == "__main__":
-    
+
     ts = [10., 20., 30., 11., 5., 6., 33., 24., 15., 17.]
     result1 = asc(ts, ('all'), 95)
     result2 = dsc(ts, ('all'), 95)
