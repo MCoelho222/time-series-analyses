@@ -1,4 +1,5 @@
 loguru
 matplotlib
 numpy
+pandas
 scipy

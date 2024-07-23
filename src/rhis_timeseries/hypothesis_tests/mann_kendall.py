@@ -7,14 +7,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sts
 
+from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal, test_decision_norm
+
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
 
 
-def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResults:
+def mann_kendall_test(
+        ts: list[int|float] | np.ndarray[int|float],
+        alternative: str = 'two-sided',
+        alpha: float=0.05,*,
+        continuity: bool=True
+        ) -> TestResults:
+    """
+    Apply the Mann-Kendall test to a time series.
 
+    Reference: HELSEL & HIRSCH (2002). Techniques of Water Resources investigations fo the United States Geological Survey.
+    Chapter 3 - Statistical Methods in Water Resources. p. 212-216 (Kendall's Tau).
+
+    Parameters
+    ----------
+        alternative
+            One of the alternative hypotheses:
+                two-sided
+                greater
+                less
+        alpha
+            The significance level for the test.
+        continuity
+            If True, applies the correction for continuity for the normal approximation.
+
+    Return
+    ------
+        namedtuple('Mann_Kandall_Test', ['statistic', 'p_value', 'alternative', 'decision'])
+    """
     n = len(ts)
-
+    ts = np.array(ts)
     signs = []
     for i in range(n - 1):
         s = ts - ts[i]
@@ -24,7 +52,7 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
 
     test_s = float(len(signs_array[signs_array > 0]) - len(signs_array[signs_array < 0]))
 
-    sigma = ((n/18.)*(n - 1.)*(2.*n + 5.))**0.5
+    sigma = ((n / 18.) * (n - 1.) * (2. * n + 5.)) ** 0.5
 
     condition_value = 0.
 
@@ -34,20 +62,31 @@ def mann_kendall_test(ts: list[int|float] | np.ndarray[int|float]) -> TestResult
         z = condition_value
     if test_s < condition_value:
         z = abs((test_s + 1.)/sigma)
+    print(z)
+    # p = 2 * (1 - sts.norm.cdf(z))
 
-    p = 2*(1 - sts.norm.cdf(z))
+    p_value = p_value_normal(z)
+    decision = test_decision_norm(z, alpha, alternative)
+    Results = namedtuple('Mann_Kendall', ['z', 'p_value', 'alternative', 'decision'])  # noqa: PYI024
 
-    Results = namedtuple('Mann_Kendall', ['z', 'p_value'])  # noqa: PYI024
-
-    return Results(z, p)
+    return Results(z, p_value, alternative, decision)
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import pandas as pd
 
-    ts = np.random.randint(0, 100, 100)
-    print(ts)
+    df = pd.read_csv('./MarchMilwaukeeChloride.csv')
+    print(df.head())
+    ts = df['Conc']
+    df.plot()
+    plt.show()
+
+    # rng = np.random.default_rng()
+    # ts = rng.integers(0, 100, 100)
+    # print(ts)
     print(mann_kendall_test(ts))
 
-    plt.figure()
-    plt.scatter(np.arange(len(ts)), ts)
-    plt.show()
+    # plt.figure()
+    # plt.scatter(np.arange(len(ts)), ts)
+    # plt.show()

@@ -1,14 +1,20 @@
 # Time Series Representativeness (RHIS)
 
-This repository presents four methods for the detection of variability patterns in time series. Essentially, it is checked if the time series are compliant with the basic assumptions for statistical representativeness, i. e., to be able for the application of statistical methods for frequency analysis, a time series must be compliant with the hypothesis of randomness, homogeneity, independence and stationarity (RHIS). In other words, the methods check if all sample data comes from the same population.
+This repository presents 4 methods that can be simultaneously applied in time series for variability patterns detection. Essentially, these methods check if the time series are compliant with the basic assumptions for statistical representativeness, i. e., the application of statistical methods for frequency analysis depends on the compliance with the hypotheses of randomness, homogeneity, independence, and stationarity (RHIS). If at least one of these hypotheses is rejected, it means that there is high chance for the presence of a variability pattern, such as trend, shift, and/or seasonality. In this situation, statistical methods likely will not produce representative results. In order to get representativeness, a period of data should be selected, which actually represents the current conditions and can possibly be used for planning future periods. 
 
-Basically, there are three patterns that can make the RHIS hypotheses to be rejected:
+Generally, there are 3 patterns that can cause rejection of RHIS hypotheses:
 
 * **Trends**
 * **Seasonality**
 * **Shifts**
 
-In the context of water resources management, for example, the continuous and uncontrolled urban expansion process in the cities makes the waters from rain to reach the river channel each time faster due to waterproofing of the soil. So, the streamflow data becomes greater year after year characterizing a trend. When this is statistically confirmed, an strategy for data selection or treatment should be implemented.
+In the context of water resources management, for example, the continuous and disordered urban expansion processes iof cities makes the waters from rain to reach the river channel each time faster due to waterproofing of the soil. So, the streamflow data becomes greater year after year characterizing a trend in the time series. When this is statistically confirmed, an strategy for data selection or treatment should be implemented. Finally, the selected data must then be compliant with the RHIS hypotheses.
+
+# How this package can help you?
+
+When you want to know if a time series is representative, the first thing to do is to apply the RHIS tests in the complete time series. If one or more hypotheses are rejected, one strategy is to select only a period of the data where the actual characteristics are represented. However, we have to include the maximum quantity of information by selecting the maximum data we can. This selection period must be RHIS-compliant, so we would have to test every time we include one more data in the selection. Here is where this program comes in. 
+
+It provides a method that applies the RHIS hypotheses in a time series with an increasing number of elements. The initial time series will have only the first 5 or 10 elements and then this number will be increasing one by one, and the tests applied each time this number increases. When the results of the tests are plotted in sequence, if there is a representative period, it will be possible to see the exact time when data starts to be complete compliant and you should select the data considering this point as a divisor. 
 
 # Methods - Hypothesis (RHIS)
 
@@ -23,15 +29,15 @@ Briefly, the runs method checks if there are too many values above or below the 
 
 ## Homogeneity
 
-The homogeneity test check if the halves of the time series are statistically equal. Homogeneity is rejected if one of the halves is greater or smaller than the other, for a given significance level.
+The homogeneity test checks if the halves of the time series are statistically equal. Homogeneity is rejected if one of the halves is greater or smaller than the other, for a given significance level.
 
 ## Independence
 
-A time series has dependency when a value influences the next. For example, if it rains a lot one day and it stops, the daily streamflow measurements of the next days will have a pattern, being each day higher while the underground water keeps flowing into the river, and the opposite when it stops flowing. Independece is rejected if this kind of pattern occur, for a given significance level.
+A time series has dependency when a value influences the next. For example, if it rains a lot one day and it stops, the daily streamflow measurements of the next days will have a pattern, being each day higher while the underground water keeps flowing into the river, and the opposite when it stops flowing. Independece is rejected if this kind of pattern occurs, for a given significance level.
 
 ## Stationarity
 
-When a time series increase or decrease with time, it is said to be a non-stationary series if the hypothesis is rejected for a given significance level.
+When a time series consistently increases or decreases with time, it is considered non-stationary if the hypothesis is rejected for a given significance level.
 
 
 # Scientific foundations
