@@ -93,7 +93,7 @@ def ties_correction(ts: TimeSeriesFlex) -> list[list[int | float]]:
 
 
 if __name__ == "__main__":
-    ties = [5, 1, 2.2, 2.2, 8, 23, 87, 54, 55, 1.5, 2.2, 4.3, 4]
+    ties = [5, 1, 2.2, 2.2, 8]
     ties = np.array(ties)
     ties_correction = ties_correction(ties)
 
