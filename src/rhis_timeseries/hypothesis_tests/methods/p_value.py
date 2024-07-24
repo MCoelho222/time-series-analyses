@@ -25,16 +25,16 @@ def test_decision_norm(z, alpha, alternative):
     if alternative == 'two-sided':
         limit = 1 - alpha / 2
         z_alpha = sts.norm.ppf(limit)
-        print(z_alpha)
-        return False if z > z_alpha else True
+        print('2-sided z', z_alpha)
+        return False if abs(z) > z_alpha else True
     if alternative == 'greater':
         z_alpha = 1 - sts.norm.ppf(alpha)
-        print(z_alpha)
-        return False if z > z_alpha and z > 0 else True
+        print('greater z', z_alpha)
+        return False if z > 0 and z > z_alpha else True
     if alternative == 'less':
         z_alpha = sts.norm.ppf(alpha)
-        print(z_alpha)
-        return False if z > z_alpha and z < 0 else True
+        print('less z', z_alpha)
+        return False if z < 0 and z < z_alpha else True
 
 if __name__ == "__main__":
 
