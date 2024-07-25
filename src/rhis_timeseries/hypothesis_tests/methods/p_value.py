@@ -21,23 +21,39 @@ def p_value_normal(statistic: float) -> float:
 
     return p_value
 
-def test_decision_norm(z, alpha, alternative):
+
+def test_decision_normal(z: float, alpha: float, alternative: str) -> dict[str, float]:
+    """
+    Decision about null hypothesis using normal approximation.
+
+    Parameters
+    ----------
+        z
+            The value of the test statistic.
+        alpha
+            The significance level of the test.
+        alternative
+            The alternative hypothesis: 'two-sided', 'greater', or 'less'.
+
+    Return
+    ------
+        A dictionary with z, alpha, and decision. The parameter 'decision' is a boolean,
+        It is True when the null hypothesis could not be rejected, and False otherwise.
+    """
     if alternative == 'two-sided':
-        limit = 1 - alpha / 2
-        z_alpha = sts.norm.ppf(limit)
-        print('2-sided z', z_alpha)
-        return False if abs(z) > z_alpha else True
+        alpha = 1 - alpha / 2
+        z = abs(z)
     if alternative == 'greater':
-        z_alpha = 1 - sts.norm.ppf(alpha)
-        print('greater z', z_alpha)
-        return False if z > 0 and z > z_alpha else True
-    if alternative == 'less':
-        z_alpha = sts.norm.ppf(alpha)
-        print('less z', z_alpha)
-        return False if z < 0 and z < z_alpha else True
+        alpha = 1 - alpha
 
-if __name__ == "__main__":
+    z_alpha = sts.norm.ppf(alpha)
+    cond = z > z_alpha if alternative != 'less' else z < z_alpha
 
-    p_value_normal(1.65)
+    decision = False if cond else True
 
-    test_decision_norm(1.2, 0.05, 'two-sided')
+    return {
+        'alpha': alpha,
+        'z': z_alpha,
+        'decision': decision
+    }
+
