@@ -18,8 +18,8 @@ def mann_kendall_test(
         alpha: float=0.05,
     ) -> TestResults:
     """
-    Apply the Mann-Kendall test.
-
+    Apply the Mann-Kendall test using the normal approximation,
+    which is valid for series with 10 or more elements (GILBERT, 1987).
 
     Parameters
     ----------
