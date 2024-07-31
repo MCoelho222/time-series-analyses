@@ -43,7 +43,7 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int | np.int32]:
     return tie_ranks
 
 
-def ties_correction(ts: TimeSeriesFlex, ties_data: bool=False) -> list[list[int | float]]:
+def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) -> list[list[int | float]]:  # noqa: C901
     """
     Apply correction for ties.
 
