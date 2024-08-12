@@ -16,7 +16,6 @@ def test_mann_whitney():
     Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
 
     Chapter 5 - Differences between two independent groups
-
     """
     x = [0.59, 0.87, 1.1, 1.1, 1.2, 1.3, 1.6, 1.7, 3.2, 4.0] # industrial site
     y = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7] # residential site
