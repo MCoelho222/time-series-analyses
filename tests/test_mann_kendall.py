@@ -10,4 +10,4 @@ def test_mann_kendall():
     error = 0.1
 
     assert greater.z - correct_z < error
-    assert not greater.decision
+    assert not greater.reject

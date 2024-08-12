@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import namedtuple
+
 import scipy.stats as sts
 
 
@@ -22,7 +24,7 @@ def p_value_normal(statistic: float) -> float:
     return p_value
 
 
-def test_decision_normal(z: float, alpha: float, alternative: str) -> dict[str, float]:
+def test_decision_normal(z: float, alternative: str, alpha: float, ) -> dict[str, float]:
     """
     Decision about null hypothesis using normal approximation.
 
@@ -40,20 +42,22 @@ def test_decision_normal(z: float, alpha: float, alternative: str) -> dict[str, 
         A dictionary with z, alpha, and decision. The parameter 'decision' is a boolean,
         It is True when the null hypothesis could not be rejected, and False otherwise.
     """
+    z_abs = abs(z)
+    p = (1 - sts.norm.cdf(z_abs))
+
     if alternative == 'two-sided':
-        alpha = 1 - alpha / 2
-        z = abs(z)
+        p = p * 2
+        reject = p < alpha
+    if alternative == 'less':
+        reject = p < alpha
     if alternative == 'greater':
-        alpha = 1 - alpha
+        reject = p < alpha
 
-    z_alpha = sts.norm.ppf(alpha)
-    cond = z > z_alpha if alternative != 'less' else z < z_alpha
+    Result = namedtuple('TestDecisionNormal', ['p', 'alpha', 'reject'])  # noqa: PYI024
 
-    decision = False if cond else True
+    return Result(p, alpha, reject)
 
-    return {
-        'alpha': alpha,
-        'z': z_alpha,
-        'decision': decision
-    }
+if __name__ == "__main__":
+    reject = test_decision_normal(-1.97, 'less', 0.05)
+    print(reject)
 

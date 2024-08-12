@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rhis_timeseries.errors.exception import raise_timeseries_type_error
-from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal, test_decision_norm
+from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal, test_decision_normal
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
@@ -39,10 +39,10 @@ def runs_test(
             H1: (greater): The events in the underlying population represented by the
                 sample series are distributed non-randomly due to too many runs.
 
-        Reference
-        ---------
-            SHESKIN, 2004. Handbook of Parametric and Nonparametric Statistical Procedures
-            - Test 10. 3rd edition.
+    References
+    ---------
+        SHESKIN, 2004. Handbook of Parametric and Nonparametric Statistical Procedures
+        - Test 10. 3rd edition.
 
     Parameters
     ----------
@@ -113,11 +113,10 @@ def runs_test(
     num_z = (abs(stat - stat_med) - 0.5) if continuity else stat - stat_med
     z = num_z / ((variance_num / variance_den) ** 0.5)
 
-    p_value = p_value_normal(z)
-    decision = test_decision_norm(z, alpha, alternative)
-    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'alternative', 'decision'])  # noqa: PYI024
+    decision = test_decision_normal(z, alpha, alternative)
+    Results = namedtuple('Runs_Test', ['statistic', 'z', 'p_value', 'alternative', 'decision'])  # noqa: PYI024
 
-    return Results(z, p_value, alternative, decision)
+    return Results(stat, z, decision.p_value, alternative, decision.reject)
 
 
 def wallismoore(
@@ -130,14 +129,16 @@ def wallismoore(
 
     Reference
     ---------
-        SHESKIN, 2004. Handbook of Parametric and Nonparametric Statistical Procedures - Test 10. 3rd edition.
+        SHESKIN (2004). Handbook of Parametric and Nonparametric Statistical Procedures - Test 10. 3rd edition.
 
     Parameters
     ----------
-        ts       => 1D list or numpy array.
-        interval => 1D list or tuple with length 2. The first object is the
-                    index referent to the sample number to start the time
-                    series. The second number is last sample number.
+        ts
+            1D list or numpy array.
+        interval
+            1D list or tuple with length 2. The first object is the
+            index referent to the sample number to start the time
+            series. The second number is last sample number.
         alpha
             The significance level for the test.
 
@@ -200,7 +201,7 @@ def wallismoore(
     z = (runs - u) / sigma
 
     p_value = p_value_normal(z)
-    decision = test_decision_norm(z, alpha, alternative)
+    decision = test_decision_normal(z, alpha, alternative)
     Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'alternative', 'decision'])  # noqa: PYI024
 
     return Results(z, p_value, alternative, decision)
