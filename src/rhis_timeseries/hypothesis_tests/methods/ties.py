@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
 
-def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int | np.int32]:
+def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
     """
     Check if there equal numbers in sequence and get their ranks.
 
@@ -43,7 +43,8 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int | np.int32]:
     return tie_ranks
 
 
-def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) -> list[list[int | float]]:  # noqa: C901
+def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) \
+      -> list[int | float] | dict[str, str | int]:  # noqa: C901
     """
     Apply correction for ties.
 
@@ -81,16 +82,19 @@ def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) -> list[list[in
 
     if len(ties_index) > 0:
         logger.info('Applying correction for ties...')
+
         for i in range(len(ties_index)):
             mean = np.mean(np.array(ties_index[i]))
             for j in range(len(ties_index[i])):
                 ranks[ties_index[i][j] - 1] = mean
+
         logger.info('Correction for ties complete.')
     else:
         logger.info('No ties present.')
 
     if ties_data:
         logger.info('Gathering ties data...')
+
         ties_group_counts = []
         unique_ranks = np.unique(ranks)
         for rank in unique_ranks:
@@ -103,6 +107,7 @@ def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) -> list[list[in
             'ties_count': len(ties_group_counts),
             'ties_groups_count': ties_group_counts,
         }
+
         logger.info('Ties data complete.')
 
         return ties_data
@@ -113,6 +118,6 @@ def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) -> list[list[in
 if __name__ == "__main__":
     ties = [5, 1, 2.2, 2.2, 8, 8]
     ties = np.array(ties)
-    ties_correction = ties_correction(ties, ties_data=True)
+    ties_correction = ties_correction(ties)
 
     print(ties_correction)

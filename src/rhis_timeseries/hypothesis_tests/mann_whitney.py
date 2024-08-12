@@ -3,125 +3,136 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.errors.exception import raise_timeseries_type_error
-from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal
+from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_args
 from rhis_timeseries.hypothesis_tests.methods.ties import ties_correction
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
 
-
-def mann_whitney_u(a: list[int | float], b: list[int | float], alternative: str = 'two-sided') \
-    -> TestResults:
+@check_args
+def mann_whitney(  # noqa: PLR0913
+        x: list[int | float],
+        y: list[int | float],
+        alternative: str='two-sided',
+        alpha: float=0.05,
+        *,
+        continuity: bool=True,
+        ties: bool=True,
+        ) -> TestResults:
     """
-    Compare two independent groups of data.
+    Compare two independent groups of data using the Mann-Whitney U test.
 
+    This implementation applies the large sample approximation (applicable if x, y > 10 elements).
     The Mann-Whitney test is also known as The Rank-Sum test or Wilcoxon Rank-Sum.
-    This test assumes homoscedasticity and independent groups.
+
+    Assumptions
+        - Each sample has been randomnly selected from the population it represents.
+        - The two samples are independent of one another.
+        - The original variable observed (which is subsequently ranked) is a continuous random variable.
+        - The underlying distributions from which the samples are derived are identical in shape.
+
+    Null and Alternative Hypotheses
+
+        H0: prob[x > y] = 0.5
+
+        H1: prob[ x > y] != 0.5 (two-sided)
+        H2: prob[ x > y] > 0.5 (greater)
+        H3: prob[ x > y] < 0.5 (less)
+
+    References
+    ----------
+        HELSEL & HIRSCH (2002). Techniques of Water Resources investigations fo the United States Geological Survey.
+        Chapter 5 - Statistical Methods in Water Resources. Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
 
     Parameters
     ----------
-        a
+        x
             A list of floats or integers.
-        b
+
+        y
             A list of floats or integers.
+
         alternative
-            two-sided: a!=b
-            greater: a > b
-            less: a < b
+            two-sided: x != y
+            greater: x > y
+            less: x < y
+
+        alpha
+            The significance level (0.05 by default).
+
+        continuity
+            True or False. Controls whether to apply correction for continuity or not.
+
+        ties
+            True or False. Controls whether to apply correction for ties or not.
+
     Returns
     -------
-        Mann-Whitney(statistic, p-value). This p-value refers to a two-sided test.
-     """
-    raise_timeseries_type_error(a)
-    raise_timeseries_type_error(b)
+        MannWhitney(statistic, p_value, alternative, rejection).
 
-    ts = a + b
-    ts_sorted = np.sort(ts)
-
-    n = len(ts)
-    n1 = len(a)
-    n2 = len(b)
-
-    ranks = np.arange(1, n + 1).tolist()
-
-    updated_ranks = ties_correction(ts_sorted)
-
-    dict1 = {}
-    for i in range(n):
-        dict1[ts_sorted[i]] = updated_ranks[i]
-    for i in range(len(a)):
-        a[i] = dict1[a[i]]
-    for i in range(len(b)):
-        b[i] = dict1[b[i]]
-
-    if n1 < n2:
-        mean = (n1 * (n1 + n2 + 1)) / 2
-        rank_sum = np.sum(a)
-    else:
-        mean = (n2 * (n1 + n2 + 1)) / 2
-        rank_sum = np.sum(b)
-
-    square_sum_ranks = np.sum(np.array(updated_ranks) ** 2)
-
-    var_no_ties = (n1 * n2 * (n1 + n2 + 1)) / 12
-
-    var_ties = ((n1 * n2) / ((n1 + n2) * (n1 + n2 - 1))) * square_sum_ranks \
-        - ((n1 * n2 * (n1 + n2 + 1) ** 2) / (4 * (n1 + n2 - 1)))
-
-    var = var_no_ties if updated_ranks == ranks else var_ties
-
-    if rank_sum > mean:
-        stat = (rank_sum - 0.5 - mean) / np.sqrt(var)
-    if rank_sum < mean:
-        stat = (rank_sum + 0.5 - mean) / np.sqrt(var)
-    if rank_sum == mean:
-        stat = 0
-
-    p_value = p_value_normal(stat, alternative)
-
-    Results = namedtuple('Mann_Whitney', ['statistic', 'p_value', 'alternative'])  # noqa: PYI024
-
-    return Results(stat, p_value, alternative)
-
-
-if __name__ == "__main__":
+            statistic: float
+            p_value: float
+            alternative: str
+            rejection: bool (if True, reject H0)
     """
-    Example from the book Statistical Methods in Water Resources
+    # Create a copy of x and y, so they remain as they are
+    g1 = x[:]
+    g2 = y[:]
 
-    Auhtor: Helsel & Hirsch
-    Year: 2002
-    Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
+    # Concatenate and sort for ranks calculation
+    gs_concat = g1 + g2
+    gs_sorted = np.sort(gs_concat)
 
-    Chapter 5 - Differences between two independent groups
-    """
-    ts1 = [0.59, 0.87, 1.1, 1.1, 1.2, 1.3, 1.6, 1.7, 3.2, 4.0]
-    ts2 = [0.3, 0.36, 0.5, 0.7, 0.7, 0.9, 0.92, 1., 1.3, 9.7]
+    # Transform to ranks
+    n = len(gs_concat)
+    ranks = ties_correction(gs_sorted) if ties else [ i + 1 for i in range(n) ]
 
-    plt.figure(figsize=(8, 6))
-    plt.title('Nitrogen concentration in precipitation (mg/L)')
-    plt.plot(ts1, label='industrial site')
-    plt.plot(ts2, label='residential site')
-    plt.legend()
-    plt.show()
+    # Ranks mapping and distribution to original groups
+    ranks_dict = dict(zip(gs_sorted, ranks))
+    g1_ranks = [ ranks_dict[value] for value in g1 ]
+    g2_ranks = [ ranks_dict[value] for value in g2 ]
 
-    mwhitney_less = mann_whitney_u(a=ts1, b=ts2, alternative='less')
-    mwhitney_greater = mann_whitney_u(a=ts1, b=ts2, alternative='greater')
-    mwhitney_2sided = mann_whitney_u(a=ts1, b=ts2, alternative='two-sided')
-    scipy_mwhitney_less = sts.mannwhitneyu(ts1, ts2, alternative='less')
-    scipy_mwhitney_greater = sts.mannwhitneyu(ts1, ts2, alternative='greater')
-    scipy_mwhitney_2sided = sts.mannwhitneyu(ts1, ts2, alternative='two-sided')
+    # Ranks sum
+    rank_sum1 = sum(g1_ranks)
+    rank_sum2 = sum(g2_ranks)
 
-    print('LESS', end='\n\n')
-    print(mwhitney_less)
-    print(scipy_mwhitney_less, end='\n\n')
-    print('GREATER', end='\n\n')
-    print(mwhitney_greater)
-    print(scipy_mwhitney_greater, end='\n\n')
-    print('TWO-SIDED', end='\n\n')
-    print(mwhitney_2sided)
-    print(scipy_mwhitney_2sided)
+    # Calculation of U
+    n1 = len(g1)
+    n2 = len(g2)
+    u1 = n1 * n2 + (n1 * (n1 + 1)) / 2 - rank_sum1
+    u2 = n1 * n2 + (n2 * (n2 + 1)) / 2 - rank_sum2
+
+    # Test statistic
+    u = min(u1, u2)
+
+    # Applying the large sample approximation
+    mean_u = (n1 * n2) / 2
+    var = (n1 * n2 * (n1 + n2 + 1)) / 12
+    if ties:
+        # Adjusting variance for ties
+        var = ((n1 * n2) / ((n) * (n - 1))) * np.sum(np.array(ranks) ** 2) \
+            - ((n1 * n2 * (n + 1) ** 2) / (4 * (n - 1)))
+
+    z = abs(u - mean_u) / np.sqrt(var)
+
+    # Adjusting z for continuity
+    if continuity:
+        z = (abs(u - mean_u) - 0.5) / np.sqrt(var)
+
+    # p-value and decision
+    p = (1 - sts.norm.cdf(z))
+
+    if alternative == 'two-sided':
+        p = p * 2
+        reject = p < alpha
+    if alternative == 'less':
+        reject = rank_sum1 < rank_sum2 and p < alpha
+    if alternative == 'greater':
+        reject = rank_sum1 > rank_sum2 and p < alpha
+
+    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
+
+    return Results(u, round(p, 4), reject)
