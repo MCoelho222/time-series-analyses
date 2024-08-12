@@ -4,14 +4,16 @@ from collections import namedtuple
 from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.methods.p_value import p_value_normal, test_decision_normal
+from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ties import ties_correction
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
 
 
+@check_test_args('mann-kendall')
 def mann_kendall_test(
         ts: list[int|float] | np.ndarray[int|float],
         alternative: str = 'two-sided',
@@ -71,9 +73,17 @@ def mann_kendall_test(
     if test_s < condition_value:
         z = abs((test_s + 1.)/sigma)
 
-    p_value = p_value_normal(z)
-    decision = test_decision_normal(z, alpha, alternative)['decision']
-    Results = namedtuple('Mann_Kendall', ['z', 'p_value', 'alternative', 'decision'])  # noqa: PYI024
+    p = (1 - sts.norm.cdf(z))
 
-    return Results(round(z, 2), round(p_value, 4), alternative, decision)
+    if alternative == 'two-sided':
+        p = p * 2
+        reject = p < alpha
+    if alternative == 'less':
+        reject = test_s < condition_value and p < alpha
+    if alternative == 'greater':
+        reject = test_s > condition_value and p < alpha
+
+    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
+
+    return Results(test_s, round(p, 4), reject)
 

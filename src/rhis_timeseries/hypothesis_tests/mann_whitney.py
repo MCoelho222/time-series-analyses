@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_args
+from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ties import ties_correction
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
 
-@check_args
+@check_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
         y: list[int | float],
