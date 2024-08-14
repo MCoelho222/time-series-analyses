@@ -22,13 +22,14 @@ def test_mann_whitney():
 
     median_x = 1.25
     median_y = 0.8
-    stat = 23.5
-    p = 0.0246
+    expected_stat = 23.5
+    expected_p = 0.0246
+
     result = mann_whitney(x, y, alternative='greater')
 
     assert np.median(np.array(x)) == median_x
     assert np.median(np.array(y)) == median_y
-    assert result.statistic == stat
-    assert result.p_value == p
+    assert result.statistic == expected_stat
+    assert result.p_value == expected_p
 
 

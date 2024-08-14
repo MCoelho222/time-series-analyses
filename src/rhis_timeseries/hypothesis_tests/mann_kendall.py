@@ -7,7 +7,7 @@ import numpy as np
 import scipy.stats as sts
 
 from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
-from rhis_timeseries.hypothesis_tests.methods.ties import ties_correction
+from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
@@ -23,27 +23,30 @@ def mann_kendall_test(
     Apply the Mann-Kendall test using the normal approximation,
     which is valid for series with 10 or more elements (GILBERT, 1987).
 
-    Parameters
-    ----------
-        alternative
-            One of the alternative hypotheses: 'two-sided', 'greater', or 'less'.
-        alpha
-            The significance level for the test. Default is 0.05.
-
-    Return
-    ------
-        namedtuple('Mann_Kendall', ['z', 'p_value', 'alternative', 'decision'])
-            z: test statistic
-            p_value: p-value of the test
-            alternative: 'two-sided', 'greater', or 'less'
-            decision: boolean. True if null hypothesis could not be rejected, False otherwise.
-
     References
     ----------
         GILBERT, R. O. (1987). Statistical Methods for Environmental Pollution Monitoring.
 
         HELSEL & HIRSCH (2002). Techniques of Water Resources investigations fo the United States Geological Survey.
         Chapter 3 - Statistical Methods in Water Resources.
+
+    Parameters
+    ----------
+        ts
+            A time series to be tested.
+
+        alternative
+            One of the alternative hypotheses: 'two-sided', 'greater', or 'less'.
+
+        alpha
+            The significance level for the test. Default is 0.05.
+
+    Return
+    ------
+        namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject'])
+            statistic: Test statistic.
+            p_value: p-value of the test.
+            reject: True if the null hypothesis could not be rejected, False otherwise.
     """
     n = len(ts)
     ts = np.array(ts)
@@ -56,7 +59,7 @@ def mann_kendall_test(
     signs_array = np.array(signs)
     test_s = float(len(signs_array[signs_array > 0]) - len(signs_array[signs_array < 0]))
 
-    ties_data = ties_correction(ts, ties_data=True)['ties_groups_count']
+    ties_data = ranks_ties_corrected(ts, ties_data=True)['ties_groups_count']
 
     ties_factor = 0
     for value in ties_data:

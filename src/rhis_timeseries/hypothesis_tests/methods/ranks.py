@@ -30,6 +30,7 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
     n = len(ts)
     ts_sorted = np.sort(ts)
     ranks = list(range(1, n + 1))
+
     tie_ranks = []
     i = start
     while ts_sorted[i] == ts_sorted[i + 1]:
@@ -37,13 +38,14 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
         i += 1
         if i == n - 1:
             break
+
     if len(tie_ranks) > 0:
         tie_ranks.append(tie_ranks[-1] + 1)
 
     return tie_ranks
 
 
-def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) \
+def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
       -> list[int | float] | dict[str, str | int]:  # noqa: C901
     """
     Apply correction for ties.
@@ -59,42 +61,34 @@ def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) \
     """
     raise_timeseries_type_error(ts)
 
-    logger.info('Checking for ties...')
+    ranks = np.array(to_ranks(ts), dtype=float)
 
     ts_sorted = np.sort(ts)
-    ranks = np.arange(1, len(ts_sorted) + 1).tolist()
-
     ties_index = []
-
     m = 0
     while m < len(ts) - 1:
-        if m == 0: # Here the index n - 1 is not checked, as it doesn't exist
+        if m == 0:
             tie_ind = get_ties_index(ts, m)
             if len(tie_ind) > 0:
                 ties_index.append(tie_ind)
         if m > 0:
             if ts_sorted[m] == ts_sorted[m + 1]:
-                if ts_sorted[m] != ts_sorted[m - 1]: # indicates a new tie
+                if ts_sorted[m] != ts_sorted[m - 1]:
                     new_index = m
                     new_tie_ind = get_ties_index(ts, new_index)
                     ties_index.append(new_tie_ind)
         m += 1
 
     if len(ties_index) > 0:
-        logger.info('Applying correction for ties...')
 
-        for i in range(len(ties_index)):
-            mean = np.mean(np.array(ties_index[i]))
-            for j in range(len(ties_index[i])):
-                ranks[ties_index[i][j] - 1] = mean
-
-        logger.info('Correction for ties complete.')
+        for index in ties_index:
+            mean = np.mean(index)
+            for ind in index:
+                ranks[ranks == ind] = mean
     else:
-        logger.info('No ties present.')
+        logger.info('No ties are present.')
 
     if ties_data:
-        logger.info('Gathering ties data...')
-
         ties_group_counts = []
         unique_ranks = np.unique(ranks)
         for rank in unique_ranks:
@@ -108,16 +102,35 @@ def ties_correction(ts: TimeSeriesFlex,*, ties_data: bool=False) \
             'ties_groups_count': ties_group_counts,
         }
 
-        logger.info('Ties data complete.')
-
         return ties_data
 
     return ranks
 
 
-if __name__ == "__main__":
-    ties = [5, 1, 2.2, 2.2, 8, 8]
-    ties = np.array(ties)
-    ties_correction = ties_correction(ties)
+def to_ranks(ts: TimeSeriesFlex) -> TimeSeriesFlex:
+    """
+    Transform the original series in a series of ranks.
 
-    print(ties_correction)
+    Parameters
+    ----------
+        data
+            A list or array with numbers.
+
+    Return
+    ------
+        A list with the original data replaced by their ranks.
+    """
+    ts_unique = np.unique(ts)
+    ts_sorted = np.sort(ts)
+    ranks_dict = {}
+    for el in ts_unique:
+        index = np.where(ts_sorted == el)[0]
+        ranks_dict[el] = list(index)
+
+    ranks = []
+    for el in np.array(ts):
+        rank = ranks_dict[el].pop(0)
+        ranks.append(rank + 1)
+
+    return ranks
+

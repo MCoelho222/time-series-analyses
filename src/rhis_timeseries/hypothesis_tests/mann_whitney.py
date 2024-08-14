@@ -7,7 +7,7 @@ import numpy as np
 import scipy.stats as sts
 
 from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
-from rhis_timeseries.hypothesis_tests.methods.ties import ties_correction
+from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
@@ -64,10 +64,10 @@ def mann_whitney(  # noqa: PLR0913
             The significance level (0.05 by default).
 
         continuity
-            True or False. Controls whether to apply correction for continuity or not.
+            If True, applies correction for continuity.
 
         ties
-            True or False. Controls whether to apply correction for ties or not.
+            If True, applies correction for ties.
 
     Returns
     -------
@@ -88,7 +88,7 @@ def mann_whitney(  # noqa: PLR0913
 
     # Transform to ranks
     n = len(gs_concat)
-    ranks = ties_correction(gs_sorted) if ties else [ i + 1 for i in range(n) ]
+    ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [ i + 1 for i in range(n) ]
 
     # Ranks mapping and distribution to original groups
     ranks_dict = dict(zip(gs_sorted, ranks))
