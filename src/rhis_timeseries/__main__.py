@@ -14,43 +14,46 @@ def main():
     ROOTPATH = dirname(abspath(__file__))
     EXAMPLE_PLOTS = join(ROOTPATH, "example_plots/")
 
-    dataset = [list(np.random.uniform(-10., 100., 80)), list(np.random.uniform(50., 200., 30))]  # noqa: NPY002
+    rng = np.random.default_rng(seed=555)
+    dataset = [list(rng.uniform(-10., 100., 80)), list(rng.uniform(50., 200., 30))]
     ts = np.concatenate((dataset[0], dataset[1]))
-
-    plt.figure(figsize=(8, 6))
-    plt.plot(ts)
-    plt.title("Original timeseries")
-    plt.tight_layout()
-    plt.savefig(f"{EXAMPLE_PLOTS}original_ts.png")
-    plt.show()
-
-    plt.figure(figsize=(20, 6))
-    boxplot_evolution_plot(ts, 5)
-    plt.title("Boxplot Evolution")
-    plt.tight_layout()
-    plt.savefig(f"{EXAMPLE_PLOTS}boxplot_evolution.png")
-    plt.show()
 
     slices = slices2evol(ts, 10)
 
     evol_rhis = rhis_evol(slices)
 
-    plt.figure(figsize=(20, 6))
+    x1 = range(len(ts))
+    x2 = range(9, len(ts))
 
-    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
-
-    for hyp in hyps:
-        ts = evol_rhis[hyp]
-        plt.plot(ts, label=hyp)
-
-    plt.plot(0.05 * np.ones(len(slices)), color='red')
-    plt.legend()
-    plt.ylabel('p-value')
-    plt.xlim(0, len(slices))
-    plt.ylim(0, 1)
-    plt.title("Representativeness Evolution")
-    plt.tight_layout()
+    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(16,12))
     plt.savefig(f"{EXAMPLE_PLOTS}representativeness_evolution.png")
+    axes[0].scatter(x1, ts, color='k')
+    axes[0].set_title("Original timeseries")
+
+    axes[1].boxplot(slices,
+                    positions=range(9, len(ts)),
+                    manage_ticks=False,
+                    showmeans=True,
+                    meanline=True,
+                    showcaps=False,
+                    medianprops={'color': 'k'},
+                    meanprops={'color': 'b'},
+                    flierprops={'marker': '+', 'color': 'k'}
+                    )
+    axes[1].set_title("Boxplot Evolution")
+
+    hyps = [('randomness', 'tab:blue'), ('homogeneity', 'tab:green'),
+            ('independence', 'c'), ('stationarity', 'tab:purple')]
+
+    for hyp, c in hyps:
+        ts = evol_rhis[hyp]
+        axes[2].plot(x2, ts, label=hyp, color=c)
+        axes[2].plot(x2, 0.05 * np.ones(len(x2)), '--', color='r', linewidth=1.0)
+        axes[2].set_ylim(0, 1)
+        axes[2].legend()
+        axes[2].set_title("Representativeness Evolution")
+        axes[2].set_xlabel('Number of elements used')
+    # plt.tight_layout()
     plt.show()
 
 

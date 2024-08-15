@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
+from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
+
 
 @check_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
@@ -23,16 +24,22 @@ def mann_whitney(  # noqa: PLR0913
         ties: bool=True,
         ) -> TestResults:
     """
+    ----------------------------------------------------------------------
     Compare two independent groups of data using the Mann-Whitney U test.
 
-    This implementation applies the large sample approximation (applicable if x, y > 10 elements).
-    The Mann-Whitney test is also known as The Rank-Sum test or Wilcoxon Rank-Sum.
+    This implementation applies the large sample approximation (applicable
+    if x, y > 10 elements). The Mann-Whitney test is also known as The
+    Rank-Sum test or Wilcoxon Rank-Sum.
 
     Assumptions
-        - Each sample has been randomnly selected from the population it represents.
+
+        - Each sample has been randomnly selected from the population it
+          represents.
         - The two samples are independent of one another.
-        - The original variable observed (which is subsequently ranked) is a continuous random variable.
-        - The underlying distributions from which the samples are derived are identical in shape.
+        - The original variable observed (which is subsequently ranked) is
+          a continuous random variable.
+        - The underlying distributions from which the samples are derived
+          are identical in shape.
 
     Null and Alternative Hypotheses
 
@@ -44,9 +51,11 @@ def mann_whitney(  # noqa: PLR0913
 
     References
     ----------
-        HELSEL & HIRSCH (2002). Techniques of Water Resources investigations fo the United States Geological Survey.
-        Chapter 5 - Statistical Methods in Water Resources. Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
-
+        HELSEL & HIRSCH (2002). Techniques of Water Resources
+        investigations fo the United States Geological Survey.Chapter 5 -
+        Statistical Methods in Water Resources.
+        Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
+    ----------------------------------------------------------------------
     Parameters
     ----------
         x
@@ -68,71 +77,62 @@ def mann_whitney(  # noqa: PLR0913
 
         ties
             If True, applies correction for ties.
-
+    ----------------------------------------------------------------------
     Returns
     -------
-        MannWhitney(statistic, p_value, alternative, rejection).
+        A namedtuple
+            ('MannWhitney', ['statistic', 'p_value', 'reject'])
 
-            statistic: float
-            p_value: float
-            alternative: str
-            rejection: bool (if True, reject H0)
+            The parameter 'reject' is of type bool. 'True' means the null
+            hypothesis was reject.
+    ----------------------------------------------------------------------
     """
-    # Create a copy of x and y, so they remain as they are
-    g1 = x[:]
-    g2 = y[:]
+    g1 = x[:] if isinstance(x, list) else x[:].tolist()
+    g2 = y[:] if isinstance(y, list) else y[:].tolist()
 
-    # Concatenate and sort for ranks calculation
     gs_concat = g1 + g2
     gs_sorted = np.sort(gs_concat)
 
-    # Transform to ranks
     n = len(gs_concat)
     ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [ i + 1 for i in range(n) ]
 
-    # Ranks mapping and distribution to original groups
     ranks_dict = dict(zip(gs_sorted, ranks))
     g1_ranks = [ ranks_dict[value] for value in g1 ]
     g2_ranks = [ ranks_dict[value] for value in g2 ]
 
-    # Ranks sum
     rank_sum1 = sum(g1_ranks)
     rank_sum2 = sum(g2_ranks)
 
-    # Calculation of U
     n1 = len(g1)
     n2 = len(g2)
     u1 = n1 * n2 + (n1 * (n1 + 1)) / 2 - rank_sum1
     u2 = n1 * n2 + (n2 * (n2 + 1)) / 2 - rank_sum2
 
-    # Test statistic
-    u = min(u1, u2)
+    stat = min(u1, u2)
 
-    # Applying the large sample approximation
-    mean_u = (n1 * n2) / 2
+    mean_stat = (n1 * n2) / 2
     var = (n1 * n2 * (n1 + n2 + 1)) / 12
     if ties:
-        # Adjusting variance for ties
         var = ((n1 * n2) / ((n) * (n - 1))) * np.sum(np.array(ranks) ** 2) \
             - ((n1 * n2 * (n + 1) ** 2) / (4 * (n - 1)))
 
-    z = abs(u - mean_u) / np.sqrt(var)
+    z = abs(stat - mean_stat) / np.sqrt(var)
 
-    # Adjusting z for continuity
     if continuity:
-        z = (abs(u - mean_u) - 0.5) / np.sqrt(var)
+        z = (abs(stat - mean_stat) - 0.5) / np.sqrt(var)
 
-    # p-value and decision
     p = (1 - sts.norm.cdf(z))
 
     if alternative == 'two-sided':
         p = p * 2
         reject = p < alpha
+
     if alternative == 'less':
         reject = rank_sum1 < rank_sum2 and p < alpha
+
     if alternative == 'greater':
         reject = rank_sum1 > rank_sum2 and p < alpha
 
-    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
+    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
 
-    return Results(u, round(p, 4), reject)
+    return Results(stat, round(p, 4), reject, alternative)

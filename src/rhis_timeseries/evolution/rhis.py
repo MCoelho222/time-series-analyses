@@ -4,18 +4,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rhis_timeseries.evolution.data import slices2evol
-from rhis_timeseries.hypothesis_tests.non_parametric import NonParametric
+from rhis_timeseries.hypothesis_tests.mann_kendall import mann_kendall
+from rhis_timeseries.hypothesis_tests.mann_whitney import mann_whitney
+from rhis_timeseries.hypothesis_tests.methods.handle_data import break_list_equal_parts
+from rhis_timeseries.hypothesis_tests.runs import runs_test
+from rhis_timeseries.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
 
 
 def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
     """
-    Calculate randomness, homogeneity, independence and stationarity (rhis) p-values for time series slices.
+    ---------------------------------------------------------------------------
+    Calculate randomness, homogeneity, independence and stationarity (rhis)
+    p-values for time series slices.
 
-    The main purpose is to calculate rhis p-values for slices with increasing or decreasing length. The p-values
-    of the different lengths will indicate where or with how much elements (from beginning to end or end to beginning)
-    the series is no longer representative, due to the presence of some variability pattern, e.g., trends or seasonality.
+    The main purpose is to calculate rhis p-values for slices with increasing
+    or decreasing length. The p-values of the different lengths will indicate
+    where or with how much elements (from beginning to end or end to beginning)
+    the series is no longer representative, due to the presence of some
+    variability pattern, e.g., trends or seasonality.
 
-    The first or last slice must have at least 5 elements to the tests to be performed.
+    The first or last slice must have at least 5 elements to the tests to be
+    performed.
 
     Example
     -------
@@ -28,12 +37,12 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
 
             ts = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
             slices = [ts, ts[:9], ts[:8], ts[:7], ts[:6], ts[:5]]
-
+    ---------------------------------------------------------------------------
     Parameters
     ----------
         slices
             A list with slices from another list with float or integers.
-
+    ---------------------------------------------------------------------------
     Return
     ------
         A dictionary with rhis p-values
@@ -46,6 +55,7 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
                 'independence': [0.253, 0.022, 0.248, 0.995],
                 'stationarity': [0.534, 0.003, 0.354, 0.009],
             }
+    ---------------------------------------------------------------------------
     """
     evol_rhis = {
         'randomness': [],
@@ -54,30 +64,33 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
         'stationarity': [],
     }
 
-    for i in range(len(slices)):
-        ts = slices[i]
+    for ts_slice in slices:
+        ts = ts_slice
+        xy_ts = break_list_equal_parts(ts, 2)
 
-        runs = NonParametric.runstest(ts)
-        whit = NonParametric.mwhitney_test(ts)
-        wald = NonParametric.waldwolf_test(ts)
-        mann = NonParametric.mann_kendall_test(ts)
+        rand = runs_test(ts)
+        whit = mann_whitney(xy_ts[0], xy_ts[1])
+        wald = wald_wolfowitz(ts)
+        mann = mann_kendall(ts)
 
         rhis = {
-            'randomness': runs,
+            'randomness': rand,
             'homogeneity': whit,
             'independence': wald,
             'stationarity': mann
         }
 
         for key in evol_rhis.keys():
-            p_value = rhis[key]['stats'][1]
+            p_value = rhis[key].p_value
             evol_rhis[key].append(p_value)
 
     return evol_rhis
 
 
 if __name__ == '__main__':
-    ts = [list(np.random.uniform(-10.0, 100.0, 80)), list(np.random.uniform(30.0, 200.0, 30))]  # noqa: NPY002
+    rng = np.random.default_rng(seed=30)
+
+    ts = [list(rng.uniform(-10.0, 100.0, 80)), list(rng.uniform(30.0, 200.0, 30))]
     ts1 = np.concatenate((ts[0], ts[1]))
 
     slices = slices2evol(ts1, 5)
@@ -90,7 +103,7 @@ if __name__ == '__main__':
 
     evol_rhis = rhis_evol(slices)
 
-    plt.figure(figsize=(20, 6))
+    plt.figure(figsize=(12, 6))
     hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
     for hyp in hyps:
         plt.plot(evol_rhis[hyp], label=hyp)

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.exceptions.non_parametric import check_test_args
+from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
@@ -14,39 +14,45 @@ if TYPE_CHECKING:
 
 
 @check_test_args('mann-kendall')
-def mann_kendall_test(
+def mann_kendall(
         ts: list[int|float] | np.ndarray[int|float],
         alternative: str = 'two-sided',
         alpha: float=0.05,
     ) -> TestResults:
     """
+    ---------------------------------------------------------------------------
     Apply the Mann-Kendall test using the normal approximation,
     which is valid for series with 10 or more elements (GILBERT, 1987).
 
     References
     ----------
-        GILBERT, R. O. (1987). Statistical Methods for Environmental Pollution Monitoring.
+        GILBERT, R. O. (1987). Statistical Methods for Environmental Pollution
+        Monitoring.
 
-        HELSEL & HIRSCH (2002). Techniques of Water Resources investigations fo the United States Geological Survey.
-        Chapter 3 - Statistical Methods in Water Resources.
-
+        HELSEL & HIRSCH (2002). Techniques of Water Resources investigations of
+        the United States Geological Survey. Chapter 3 - Statistical Methods in
+        Water Resources.
+    ---------------------------------------------------------------------------
     Parameters
     ----------
         ts
             A time series to be tested.
 
         alternative
-            One of the alternative hypotheses: 'two-sided', 'greater', or 'less'.
+            One of the alternative hypotheses: 'two-sided', 'greater',
+            or 'less'.
 
         alpha
             The significance level for the test. Default is 0.05.
-
+    ---------------------------------------------------------------------------
     Return
     ------
-        namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject'])
-            statistic: Test statistic.
-            p_value: p-value of the test.
-            reject: True if the null hypothesis could not be rejected, False otherwise.
+        namedtuple
+            ('Mann_Kendall', ['statistic', 'p_value', 'reject'])
+
+            The parameter 'reject' is of type bool. 'True' means the null
+            hypothesis was reject.
+    ---------------------------------------------------------------------------
     """
     n = len(ts)
     ts = np.array(ts)
@@ -71,8 +77,10 @@ def mann_kendall_test(
 
     if test_s > condition_value:
         z = abs((test_s - 1.)/sigma)
+
     if test_s == condition_value:
         z = condition_value
+
     if test_s < condition_value:
         z = abs((test_s + 1.)/sigma)
 
@@ -81,12 +89,14 @@ def mann_kendall_test(
     if alternative == 'two-sided':
         p = p * 2
         reject = p < alpha
+
     if alternative == 'less':
         reject = test_s < condition_value and p < alpha
+
     if alternative == 'greater':
         reject = test_s > condition_value and p < alpha
 
-    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
+    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
 
-    return Results(test_s, round(p, 4), reject)
+    return Results(test_s, round(p, 4), reject, alternative)
 

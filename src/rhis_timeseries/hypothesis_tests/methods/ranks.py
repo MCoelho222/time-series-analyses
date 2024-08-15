@@ -85,8 +85,6 @@ def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
             mean = np.mean(index)
             for ind in index:
                 ranks[ranks == ind] = mean
-    else:
-        logger.info('No ties are present.')
 
     if ties_data:
         ties_group_counts = []

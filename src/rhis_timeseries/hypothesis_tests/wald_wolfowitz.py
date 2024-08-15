@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
+from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
 
+@check_test_args('wald-wolfowitz')
 def wald_wolfowitz(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,*,
@@ -20,15 +22,17 @@ def wald_wolfowitz(
         ties: bool = True,
         ) -> TestResults:
     """
+    ---------------------------------------------------------------------------
     Wald & Wolfowitz test for serial correlation.
 
-    Test the hypothesis that x1, ..., xN are independent observations from the same population.
+    Test the hypothesis that x1, ..., xN are independent observations from the
+    same population.
 
     References
     ----------
-        Wald A. and Wolfowitz J. (1943). An exact test for randomness in the non-parametric case
-        based on serial correlation.
-
+        Wald A. and Wolfowitz J. (1943). An exact test for randomness in the
+        non-parametric case based on serial correlation.
+    ---------------------------------------------------------------------------
     Parameters
     ----------
         ts
@@ -42,13 +46,15 @@ def wald_wolfowitz(
 
         ties
             If True and on_ranks is True, the ranks will be corrected for ties.
-
+    ---------------------------------------------------------------------------
     Return
     ------
-        namedtuple('Wald_Wolfowitz', ['statistic', 'p_value', 'reject'])
-            statistic: Test statistic.
-            p_value: p-value of the test.
-            reject: True if the null hypothesis could not be rejected, False otherwise.
+        A namedtuple
+            ('Wald_Wolfowitz', ['statistic', 'p_value', 'reject'])
+
+            The parameter 'reject' is of type bool. 'True' means the null
+            hypothesis was reject.
+    ---------------------------------------------------------------------------
     """
     arr = np.array(ts)
 
@@ -79,7 +85,7 @@ def wald_wolfowitz(
 
     reject = p < alpha
 
-    Results = namedtuple('Wald_Wolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
+    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
 
-    return Results(r, p, reject)
+    return Results(r, round(p, 4), reject)
 

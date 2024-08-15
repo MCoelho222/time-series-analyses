@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import scipy.stats as sts
 
-from src.rhis_timeseries.hypothesis_tests.mann_kendall import mann_kendall_test
+from src.rhis_timeseries.hypothesis_tests.mann_kendall import mann_kendall
 
 
 def test_mann_kendall():
@@ -20,9 +20,9 @@ def test_mann_kendall():
 
     expected_z = 3.1
     accepted_error = 0.02
-    result = mann_kendall_test(ts, 'greater')
+    result = mann_kendall(ts, 'greater')
     z = abs(sts.norm.ppf(result.p_value))
-    error = (z - expected_z) / expected_z
+    error = abs(z - expected_z) / expected_z
 
     assert error <= accepted_error
     assert result.reject
