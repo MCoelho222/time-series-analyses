@@ -7,16 +7,19 @@ import scipy.stats as sts
 
 def p_value_normal(statistic: float) -> float:
     """
-    Calculate the p_value for a given test statistic, using the normal distribution.
-
+    -------------------------------------------------
+    Calculate the p_value for a given test statistic,
+    using the normal distribution.
+    -------------------------------------------------
     Parameters
     ----------
         statistic
             The value of the statistic of the test.
-
+    -------------------------------------------------
     Returns
     -------
         The p_value.
+    -------------------------------------------------
     """
     z = abs(statistic)
     p_value = 1 - sts.norm.cdf(z)
@@ -32,8 +35,10 @@ def test_decision_normal(
         alpha: float
         ) -> dict[str, float]:
     """
-    Decide about rejection of the null hypothesis using normal approximation.
-
+    ------------------------------------------------------------
+    Decide about rejection of the null hypothesis using normal
+    approximation.
+    ------------------------------------------------------------
     Parameters
     ----------
         stat
@@ -49,14 +54,18 @@ def test_decision_normal(
             The significance level of the test.
 
         alternative
-            The alternative hypothesis: 'two-sided', 'greater', or 'less'.
-
+            The alternative hypothesis: 'two-sided', 'greater',
+            or 'less'.
+    ------------------------------------------------------------
     Return
     ------
         A namedtuple
-            ('TestDecisionNormal', ['p_value', 'alpha', 'reject', 'alternative'])
+            ('TestDecisionNormal', ['p_value', 'alpha', 'reject'
+            , 'alternative'])
 
-            The parameter 'reject' is of type bool. 'True' means the null hypothesis was reject.
+            The parameter 'reject' is of type bool. 'True' means
+            the null hypothesis was reject.
+    ------------------------------------------------------------
     """
     z_abs = abs(z)
     p = (1 - sts.norm.cdf(z_abs))

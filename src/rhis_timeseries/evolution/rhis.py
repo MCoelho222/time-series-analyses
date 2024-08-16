@@ -1,17 +1,26 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rhis_timeseries.evolution.data import slices2evol
+from rhis_timeseries.evolution.data import slices_incr_len
 from rhis_timeseries.hypothesis_tests.mann_kendall import mann_kendall
 from rhis_timeseries.hypothesis_tests.mann_whitney import mann_whitney
-from rhis_timeseries.hypothesis_tests.methods.handle_data import break_list_equal_parts
 from rhis_timeseries.hypothesis_tests.runs import runs_test
 from rhis_timeseries.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
 
+if TYPE_CHECKING:
+    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
-def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
+
+def rhis_evolution(
+        ts: TimeSeriesFlex,
+        mode: str = 'raw',*,
+        forward: bool = False,
+        bidirectional: bool = False,
+        ) -> dict[str, list[float | int]]:
     """
     ---------------------------------------------------------------------------
     Calculate randomness, homogeneity, independence and stationarity (rhis)
@@ -49,7 +58,7 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
 
         Example:
 
-            evol_rhis = {
+            rhis_evol = {
                 'randomness': [0.556, 0.265, 0.945, 0.159],
                 'homogeneity': [0.112, 0.232, 0.284, 0.492],
                 'independence': [0.253, 0.022, 0.248, 0.995],
@@ -57,34 +66,41 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
             }
     ---------------------------------------------------------------------------
     """
-    evol_rhis = {
-        'randomness': [],
-        'homogeneity': [],
-        'independence': [],
-        'stationarity': [],
-    }
+    direction = 'backward'
+    data = ts[::-1]
+    if not bidirectional and forward:
+        data = ts[:]
+        direction = 'forward'
 
-    for ts_slice in slices:
-        ts = ts_slice
-        xy_ts = break_list_equal_parts(ts, 2)
+    slices = slices_incr_len(data, 10)
+    all_slices = [slices]
+    directions = [direction,]
 
-        rand = runs_test(ts)
-        whit = mann_whitney(xy_ts[0], xy_ts[1])
-        wald = wald_wolfowitz(ts)
-        mann = mann_kendall(ts)
+    result = {}
+    if bidirectional:
+        fw_slices = slices_incr_len(ts, 10)
+        all_slices.append(fw_slices)
+        directions.append('forward')
 
-        rhis = {
-            'randomness': rand,
-            'homogeneity': whit,
-            'independence': wald,
-            'stationarity': mann
-        }
+    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+    for i in range(len(all_slices)):
+        ps = [[], [], [], []]
+        for ts_slice in all_slices[i]:
+            ps[0].append(runs_test(ts_slice).p_value)
+            ps[1].append(mann_whitney(ts_slice).p_value)
+            ps[2].append(wald_wolfowitz(ts_slice).p_value)
+            ps[3].append(mann_kendall(ts_slice).p_value)
 
-        for key in evol_rhis.keys():
-            p_value = rhis[key].p_value
-            evol_rhis[key].append(p_value)
+        if mode == 'raw':
+            rhis_evol = dict(zip(hyps, ps))
+        if mode == 'median':
+            rhis_evol = dict(zip(['rhis_median',], np.median(np.array(ps), axis=0, keepdims=True)))
+        if mode == 'mean':
+            rhis_evol = dict(zip(['rhis_mean',], np.mean(np.array(ps), axis=0, keepdims=True)))
 
-    return evol_rhis
+        result[directions[i]] = rhis_evol
+
+    return result
 
 
 if __name__ == '__main__':
@@ -93,20 +109,23 @@ if __name__ == '__main__':
     ts = [list(rng.uniform(-10.0, 100.0, 80)), list(rng.uniform(30.0, 200.0, 30))]
     ts1 = np.concatenate((ts[0], ts[1]))
 
-    slices = slices2evol(ts1, 5)
-
+    slices = slices_incr_len(ts1, 5)
     plt.figure(figsize=(8, 6))
     plt.plot(ts1)
     plt.title('Original timeseries')
     plt.tight_layout()
     plt.show()
 
-    evol_rhis = rhis_evol(slices)
-
+    rhis_evol = rhis_evolution(ts1, 'median', bidirectional=True)
+    rhis_evol_bw = rhis_evol['backward']
+    rhis_evol_fw = rhis_evol['forward']
+    # rhis_evol_fw = rhis_evolution(ts1, 'median', forward=True)['forward']
     plt.figure(figsize=(12, 6))
     hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+    hyps = ['rhis_median',]
     for hyp in hyps:
-        plt.plot(evol_rhis[hyp], label=hyp)
+        plt.plot(rhis_evol_bw[hyp], label='backward')
+        plt.plot(rhis_evol_fw[hyp], label='forward')
 
     plt.legend()
     plt.title('RHIS Evolution')

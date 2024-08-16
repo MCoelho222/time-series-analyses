@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
+from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ def mann_kendall(
     ---------------------------------------------------------------------------
     Apply the Mann-Kendall test using the normal approximation,
     which is valid for series with 10 or more elements (GILBERT, 1987).
-
+    ---------------------------------------------------------------------------
     References
     ----------
         GILBERT, R. O. (1987). Statistical Methods for Environmental Pollution

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
 
-def break_list_equal_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeriesFlex]:
+def break_list_in_equal_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeriesFlex]:
     """
     Divide a series in multiple equal parts, as much as possible.
 

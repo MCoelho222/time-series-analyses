@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
+from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
+from rhis_timeseries.utils.timeseries import break_list_in_equal_parts
 
 if TYPE_CHECKING:
     from rhis_timeseries.types.hypothesis_types import TestResults
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 @check_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
-        y: list[int | float],
+        y: list[int | float] | None = None,
         alternative: str='two-sided',
         alpha: float=0.05,
         *,
@@ -48,7 +49,7 @@ def mann_whitney(  # noqa: PLR0913
         H1: prob[ x > y] != 0.5 (two-sided)
         H2: prob[ x > y] > 0.5 (greater)
         H3: prob[ x > y] < 0.5 (less)
-
+    ----------------------------------------------------------------------
     References
     ----------
         HELSEL & HIRSCH (2002). Techniques of Water Resources
@@ -87,6 +88,11 @@ def mann_whitney(  # noqa: PLR0913
             hypothesis was reject.
     ----------------------------------------------------------------------
     """
+    if y is None:
+        data = break_list_in_equal_parts(x, 2)
+        x = data[0]
+        y = data[1]
+
     g1 = x[:] if isinstance(x, list) else x[:].tolist()
     g2 = y[:] if isinstance(y, list) else y[:].tolist()
 

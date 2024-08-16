@@ -33,6 +33,7 @@ def asc(ts, interval, q_ref):
 
     return [cumul_freq, ts3_asc, q]
 
+
 def dsc(ts, interval, q_ref):
     q_ref1 = float(q_ref)
     ts1 = np.array(ts)

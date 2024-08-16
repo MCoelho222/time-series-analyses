@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
+from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:

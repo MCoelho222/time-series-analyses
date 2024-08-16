@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_timeseries.errors.exception import raise_timeseries_type_error
-from rhis_timeseries.hypothesis_tests.decorators.non_parametric import check_test_args
+from rhis_timeseries.error.exception import raise_timeseries_type_error
+from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
 from rhis_timeseries.hypothesis_tests.methods.p_value import test_decision_normal
 
 if TYPE_CHECKING:
