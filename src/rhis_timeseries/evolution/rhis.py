@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 
 def rhis_evolution(
         ts: TimeSeriesFlex,
-        mode: str = 'raw',*,
+        mode: str = 'raw',
+        slice_start: int = 10,*,
         forward: bool = False,
         bidirectional: bool = False,
         ) -> dict[str, list[float | int]]:
@@ -59,10 +60,10 @@ def rhis_evolution(
         Example:
 
             rhis_evol = {
-                'randomness': [0.556, 0.265, 0.945, 0.159],
-                'homogeneity': [0.112, 0.232, 0.284, 0.492],
-                'independence': [0.253, 0.022, 0.248, 0.995],
-                'stationarity': [0.534, 0.003, 0.354, 0.009],
+                'r': [0.556, 0.265, 0.945, 0.159],
+                'h': [0.112, 0.232, 0.284, 0.492],
+                'i': [0.253, 0.022, 0.248, 0.995],
+                's': [0.534, 0.003, 0.354, 0.009],
             }
     ---------------------------------------------------------------------------
     """
@@ -72,17 +73,17 @@ def rhis_evolution(
         data = ts[:]
         direction = 'forward'
 
-    slices = slices_incr_len(data, 10)
+    slices = slices_incr_len(data, slice_start)
     all_slices = [slices]
     directions = [direction,]
 
     result = {}
     if bidirectional:
-        fw_slices = slices_incr_len(ts, 10)
+        fw_slices = slices_incr_len(ts, slice_start)
         all_slices.append(fw_slices)
         directions.append('forward')
 
-    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+    hyps = ['R', 'H', 'I', 'S']
     for i in range(len(all_slices)):
         ps = [[], [], [], []]
         for ts_slice in all_slices[i]:
@@ -100,14 +101,18 @@ def rhis_evolution(
 
         result[directions[i]] = rhis_evol
 
-    return result
+    return result # TODO (Marcelo): make it also return the start and end index of the series  # noqa: TD003
 
 
 if __name__ == '__main__':
+    import pandas as pd
+
+    ts = pd.read_csv('./data/BigSiouxAnnualQ.csv')['Y']
+    ts1 = np.array(ts)
     rng = np.random.default_rng(seed=30)
 
-    ts = [list(rng.uniform(-10.0, 100.0, 80)), list(rng.uniform(30.0, 200.0, 30))]
-    ts1 = np.concatenate((ts[0], ts[1]))
+    # ts = [list(rng.uniform(-10.0, 100.0, 80)), list(rng.uniform(30.0, 200.0, 30))]
+    # ts1 = np.concatenate((ts[0], ts[1]))
 
     slices = slices_incr_len(ts1, 5)
     plt.figure(figsize=(8, 6))
@@ -119,12 +124,12 @@ if __name__ == '__main__':
     rhis_evol = rhis_evolution(ts1, 'median', bidirectional=True)
     rhis_evol_bw = rhis_evol['backward']
     rhis_evol_fw = rhis_evol['forward']
-    # rhis_evol_fw = rhis_evolution(ts1, 'median', forward=True)['forward']
+
     plt.figure(figsize=(12, 6))
-    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+    hyps = ['R', 'H', 'I', 'S']
     hyps = ['rhis_median',]
     for hyp in hyps:
-        plt.plot(rhis_evol_bw[hyp], label='backward')
+        plt.plot(rhis_evol_bw[hyp][::-1], label='backward')
         plt.plot(rhis_evol_fw[hyp], label='forward')
 
     plt.legend()
