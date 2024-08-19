@@ -1,21 +1,40 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rhis_timeseries.evolution.data import slices2evol
-from rhis_timeseries.hypothesis_tests.non_parametric import NonParametric
+from rhis_timeseries.evolution.data import slices_incr_len
+from rhis_timeseries.hypothesis_tests.mann_kendall import mann_kendall
+from rhis_timeseries.hypothesis_tests.mann_whitney import mann_whitney
+from rhis_timeseries.hypothesis_tests.runs import runs_test
+from rhis_timeseries.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
+
+if TYPE_CHECKING:
+    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
 
 
-def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
+def rhis_evolution(
+        ts: TimeSeriesFlex,
+        mode: str = 'raw',
+        slice_start: int = 10,*,
+        forward: bool = False,
+        bidirectional: bool = False,
+        ) -> dict[str, list[float | int]]:
     """
-    Calculate randomness, homogeneity, independence and stationarity (rhis) p-values for time series slices.
+    ---------------------------------------------------------------------------
+    Calculate randomness, homogeneity, independence and stationarity (rhis)
+    p-values for time series slices.
 
-    The main purpose is to calculate rhis p-values for slices with increasing or decreasing length. The p-values
-    of the different lengths will indicate where or with how much elements (from beginning to end or end to beginning)
-    the series is no longer representative, due to the presence of some variability pattern, e.g., trends or seasonality.
+    The main purpose is to calculate rhis p-values for slices with increasing
+    or decreasing length. The p-values of the different lengths will indicate
+    where or with how much elements (from beginning to end or end to beginning)
+    the series is no longer representative, due to the presence of some
+    variability pattern, e.g., trends or seasonality.
 
-    The first or last slice must have at least 5 elements to the tests to be performed.
+    The first or last slice must have at least 5 elements to the tests to be
+    performed.
 
     Example
     -------
@@ -28,72 +47,90 @@ def rhis_evol(slices: list[list[float | int]]) -> dict[str, list[float | int]]:
 
             ts = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
             slices = [ts, ts[:9], ts[:8], ts[:7], ts[:6], ts[:5]]
-
+    ---------------------------------------------------------------------------
     Parameters
     ----------
         slices
             A list with slices from another list with float or integers.
-
+    ---------------------------------------------------------------------------
     Return
     ------
         A dictionary with rhis p-values
 
         Example:
 
-            evol_rhis = {
-                'randomness': [0.556, 0.265, 0.945, 0.159],
-                'homogeneity': [0.112, 0.232, 0.284, 0.492],
-                'independence': [0.253, 0.022, 0.248, 0.995],
-                'stationarity': [0.534, 0.003, 0.354, 0.009],
+            rhis_evol = {
+                'r': [0.556, 0.265, 0.945, 0.159],
+                'h': [0.112, 0.232, 0.284, 0.492],
+                'i': [0.253, 0.022, 0.248, 0.995],
+                's': [0.534, 0.003, 0.354, 0.009],
             }
+    ---------------------------------------------------------------------------
     """
-    evol_rhis = {
-        'randomness': [],
-        'homogeneity': [],
-        'independence': [],
-        'stationarity': [],
-    }
+    direction = 'backward'
+    data = ts[::-1]
+    if not bidirectional and forward:
+        data = ts[:]
+        direction = 'forward'
 
-    for i in range(len(slices)):
-        ts = slices[i]
+    slices = slices_incr_len(data, slice_start)
+    all_slices = [slices]
+    directions = [direction,]
 
-        runs = NonParametric.runstest(ts)
-        whit = NonParametric.mwhitney_test(ts)
-        wald = NonParametric.waldwolf_test(ts)
-        mann = NonParametric.mann_kendall_test(ts)
+    result = {}
+    if bidirectional:
+        fw_slices = slices_incr_len(ts, slice_start)
+        all_slices.append(fw_slices)
+        directions.append('forward')
 
-        rhis = {
-            'randomness': runs,
-            'homogeneity': whit,
-            'independence': wald,
-            'stationarity': mann
-        }
+    hyps = ['R', 'H', 'I', 'S']
+    for i in range(len(all_slices)):
+        ps = [[], [], [], []]
+        for ts_slice in all_slices[i]:
+            ps[0].append(runs_test(ts_slice).p_value)
+            ps[1].append(mann_whitney(ts_slice).p_value)
+            ps[2].append(wald_wolfowitz(ts_slice).p_value)
+            ps[3].append(mann_kendall(ts_slice).p_value)
 
-        for key in evol_rhis.keys():
-            p_value = rhis[key]['stats'][1]
-            evol_rhis[key].append(p_value)
+        if mode == 'raw':
+            rhis_evol = dict(zip(hyps, ps))
+        if mode == 'median':
+            rhis_evol = dict(zip(['rhis_median',], np.median(np.array(ps), axis=0, keepdims=True)))
+        if mode == 'mean':
+            rhis_evol = dict(zip(['rhis_mean',], np.mean(np.array(ps), axis=0, keepdims=True)))
 
-    return evol_rhis
+        result[directions[i]] = rhis_evol
+
+    return result # TODO (Marcelo): make it also return the start and end index of the series  # noqa: TD003
 
 
 if __name__ == '__main__':
-    ts = [list(np.random.uniform(-10.0, 100.0, 80)), list(np.random.uniform(30.0, 200.0, 30))]  # noqa: NPY002
-    ts1 = np.concatenate((ts[0], ts[1]))
+    import pandas as pd
 
-    slices = slices2evol(ts1, 5)
+    ts = pd.read_csv('./data/BigSiouxAnnualQ.csv')['Y']
+    ts1 = np.array(ts)
+    rng = np.random.default_rng(seed=30)
 
+    # ts = [list(rng.uniform(-10.0, 100.0, 80)), list(rng.uniform(30.0, 200.0, 30))]
+    # ts1 = np.concatenate((ts[0], ts[1]))
+
+    slices = slices_incr_len(ts1, 5)
     plt.figure(figsize=(8, 6))
     plt.plot(ts1)
     plt.title('Original timeseries')
     plt.tight_layout()
     plt.show()
 
-    evol_rhis = rhis_evol(slices)
+    rhis_evol = rhis_evolution(ts1, 'median', bidirectional=True)
+    rhis_evol_bw = rhis_evol['backward']
+    rhis_evol_fw = rhis_evol['forward']
 
-    plt.figure(figsize=(20, 6))
-    hyps = ['randomness', 'homogeneity', 'independence', 'stationarity']
+    plt.figure(figsize=(12, 6))
+    hyps = ['R', 'H', 'I', 'S']
+    hyps = ['rhis_median',]
     for hyp in hyps:
-        plt.plot(evol_rhis[hyp], label=hyp)
+        plt.plot(rhis_evol_bw[hyp][::-1], label='backward')
+        plt.plot(rhis_evol_fw[hyp], label='forward')
 
     plt.legend()
     plt.title('RHIS Evolution')

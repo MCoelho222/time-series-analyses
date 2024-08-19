@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from src.rhis_timeseries.hypothesis_tests.wald_wolfovitz import wald_wolfowitz
+from rhis_timeseries.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
 
 
 def test_wald_wolfowitz():
     """
     Test the Wald-Wolfowitz hypothesis test.
 
-    Example from the book Hidrologia Estatística
+    Example from the book Hydrological Statistic (Hidrologia Estatística - Brazil)
     Chapter 7 - Hypothesis Tests - example 7.6, p. 267
     Auhtor: Naghettini & Pinto
     Year: 2007
@@ -30,8 +30,8 @@ def test_wald_wolfowitz():
 
     result = wald_wolfowitz(ts)
 
-    stat_err = (result.statistic - expected_stat) / expected_stat
-    p_err = (result.p_value - expected_p) / expected_p
+    stat_err = abs(result.statistic - expected_stat) / expected_stat
+    p_err = abs(result.p_value - expected_p) / expected_p
 
     accepted_stat_err = 0.001
     accepted_p_err = 0.1
