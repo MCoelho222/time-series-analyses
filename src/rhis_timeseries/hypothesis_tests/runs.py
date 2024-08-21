@@ -97,7 +97,6 @@ def runs_test(
             up_runs_ones.append(1)
         if el > next_el:
             down_runs_ones.append(1)
-
     if signs[0] > 0:
         runs_per_group.append(np.sum(up_runs_ones))
         runs_per_group.append(np.sum(down_runs_ones) + 1)
