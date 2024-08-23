@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @check_test_args('runs_test')
-def runs_test(
+def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
         alternative: str = 'two-sided',
         alpha: float=0.05,*,
@@ -78,7 +78,6 @@ def runs_test(
     ts = np.array(ts) if isinstance(ts, list) else ts
 
     median = np.median(np.array(ts))
-
     up_runs_ones = []
     down_runs_ones = []
     signs = [] # +1 (higher than median); -1 (lower than median)
@@ -90,6 +89,12 @@ def runs_test(
         if element < median:
             signs.append(-1)
 
+    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
+    if not signs:
+        reject = True
+        return Results(0, 0.0, reject, alternative)
+
+
     for i in range(1, len(signs)):
         el = signs[i]
         next_el = signs[i - 1]
@@ -97,6 +102,7 @@ def runs_test(
             up_runs_ones.append(1)
         if el > next_el:
             down_runs_ones.append(1)
+
     if signs[0] > 0:
         runs_per_group.append(np.sum(up_runs_ones))
         runs_per_group.append(np.sum(down_runs_ones) + 1)
@@ -111,19 +117,19 @@ def runs_test(
 
     n1 = float(len(positives))
     n2 = float(len(negatives))
-
     stat = float(np.sum(runs_per_group))
 
-    stat_mean = (((2. * n1 * n2) / (n1 + n2)) + 1.)
-    variance_num = (2. * n1 * n2 * (2. * n1 * n2 - n1 - n2))
-    variance_den = ((n1 + n2) ** 2 * (n1 + n2 - 1.))
-
-    num_z = (abs(stat - stat_mean) - 0.5) if continuity else stat - stat_mean
-    z = num_z / ((variance_num / variance_den) ** 0.5)
+    try:
+        stat_mean = (((2. * n1 * n2) / (n1 + n2)) + 1.)
+        var_num = (2. * n1 * n2 * (2. * n1 * n2 - n1 - n2))
+        var_den = ((n1 + n2) ** 2 * (n1 + n2 - 1.))
+        num_z = (abs(stat - stat_mean) - 0.5) if continuity else stat - stat_mean
+        z = num_z / ((var_num / var_den) ** 0.5)
+    except ZeroDivisionError:
+        reject = True
+        return Results(0, 0.0, reject, alternative)
 
     decision = test_decision_normal(stat, stat_mean, z, alternative, alpha)
-    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
-
     return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
 
 
@@ -222,3 +228,13 @@ def wallismoore(
     Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
 
     return Results(runs, round(decision.p_value, 4), decision.reject, alternative)
+
+
+if __name__ == "__main__":
+    from rhis_timeseries.evolution.data import slices_incr_len
+
+    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    tss = slices_incr_len(data)
+    for ts in tss:
+        # print(runs_test(ts).p_value)
+        print(wallismoore(ts).p_value)

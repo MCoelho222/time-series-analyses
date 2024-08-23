@@ -56,7 +56,12 @@ def wald_wolfowitz(
             hypothesis was reject.
     ---------------------------------------------------------------------------
     """
+    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
     arr = np.array(ts)
+
+    if np.all(arr == arr[0]):
+        reject = True
+        return Results(0, 0., reject)
 
     if on_ranks and not ties:
         arr = to_ranks(arr)
@@ -80,12 +85,24 @@ def wald_wolfowitz(
     c =  s2 ** 2 / (n - 1) ** 2
     var_r = a + b - c
 
+    var_lim = 0.00001
+    if abs(var_r) < var_lim:
+        reject = True
+        return Results(0, 0., reject)
+
     z = abs((r - e_r) / np.sqrt(var_r))
     p = 2 * (1 - sts.norm.cdf(z))
 
     reject = p < alpha
 
-    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
-
     return Results(r, round(p, 4), reject)
+
+
+if __name__ == "__main__":
+    from rhis_timeseries.evolution.data import slices_incr_len
+
+    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    tss = slices_incr_len(data)
+    for ts in tss:
+        print(wald_wolfowitz(ts, on_ranks=False).p_value)
 

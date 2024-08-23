@@ -30,4 +30,3 @@ def break_list_in_equal_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeries
         cut_index = int(cut_index)
 
     return [ts[cut_index * i: cut_index * (i + 1)] for i in range(parts)]
-

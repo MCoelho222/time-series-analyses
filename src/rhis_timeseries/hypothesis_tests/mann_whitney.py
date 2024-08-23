@@ -88,6 +88,7 @@ def mann_whitney(  # noqa: PLR0913
             hypothesis was reject.
     ----------------------------------------------------------------------
     """
+    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if y is None:
         data = break_list_in_equal_parts(x, 2)
         x = data[0]
@@ -96,11 +97,16 @@ def mann_whitney(  # noqa: PLR0913
     g1 = x[:] if isinstance(x, list) else x[:].tolist()
     g2 = y[:] if isinstance(y, list) else y[:].tolist()
 
+
     gs_concat = g1 + g2
     gs_sorted = np.sort(gs_concat)
 
+    if np.all(gs_sorted == gs_sorted[0]):
+        reject = False
+        return Results(0, 1., reject, alternative)
+
     n = len(gs_concat)
-    ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [ i + 1 for i in range(n) ]
+    ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [i + 1 for i in range(n)]
 
     ranks_dict = dict(zip(gs_sorted, ranks))
     g1_ranks = [ ranks_dict[value] for value in g1 ]
@@ -139,6 +145,14 @@ def mann_whitney(  # noqa: PLR0913
     if alternative == 'greater':
         reject = rank_sum1 > rank_sum2 and p < alpha
 
-    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
 
     return Results(stat, round(p, 4), reject, alternative)
+
+
+if __name__ == "__main__":
+    from rhis_timeseries.evolution.data import slices_incr_len
+
+    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    tss = slices_incr_len(data)
+    for ts in tss:
+        print(mann_whitney(ts).p_value)
