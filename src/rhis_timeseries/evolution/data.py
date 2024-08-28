@@ -16,7 +16,7 @@ def slice_init(n: int):
     return 10 if n > limit else 5
 
 
-def slices_incr_len(ts: TimeSeriesFlex) -> list[list[int | float]]:
+def slices_to_evol(ts: TimeSeriesFlex) -> list[list[int | float]]:
     """
     --------------------------------------------------------------------------------
     Break a flat list into a list of lists (2D).
@@ -94,21 +94,19 @@ def starts_rejected(alpha: float, ps: TimeSeriesFlex, direction: str) -> bool:
         return ps[0] <= alpha
 
 
-def idx_of_last_not_rejected(alpha, ps: TimeSeriesFlex, direction: str, slice_init: int):
+def idx_of_last_not_rejected(alpha, ps: TimeSeriesFlex, direction: str):
     data = ps[:]
-    if direction == 'bw':
+    if direction == 'fw':
         data = ps[::-1]
     alpha_arr = np.full(len(data), alpha)
     idx = 0
     is_rejection = data <= alpha_arr
-    while ~is_rejection[idx]:
+    while is_rejection[idx]:
         if idx == len(data) - 1:
             break
         idx += 1
 
-    if direction == 'bw':
-        idx =  len(ps) - idx
     if direction == 'fw':
-        idx =  idx + slice_init
+        idx = len(ps) - idx
 
     return idx

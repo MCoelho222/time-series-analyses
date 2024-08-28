@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rhis_timeseries.evolution.data import slices_incr_len
+from rhis_timeseries.evolution.data import slices_to_evol
 from rhis_timeseries.evolution.rhis import rhis_evolution
 from rhis_timeseries.representative.most_recent import representative_slice
 
@@ -28,7 +28,7 @@ def main():  # noqa: PLR0915
 
     reprsentative_slice = representative_slice(ts)
 
-    slices = slices_incr_len(ts, test_start)
+    slices = slices_to_evol(ts, test_start)
 
     x_ts = range(len(ts))
     x_rhis_fw = range(9, len(ts))

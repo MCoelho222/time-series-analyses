@@ -11,7 +11,7 @@ from rhis_timeseries.evolution.data import (
 from rhis_timeseries.evolution.errors import raise_ts_diff_lengths
 
 
-def get_repr_index(
+def calculate_representative_range(
         bw: Iterable[float],
         fw: Iterable[float],
         alpha: float,*,
@@ -21,25 +21,40 @@ def get_repr_index(
     Get the start and final indexes of the representative time series.
     """
     raise_ts_diff_lengths(bw, fw)
-
     only_floats = drop_nans_from_evol(bw, fw)
     bw_floats = only_floats['bw']
     fw_floats = only_floats['fw']
     slice_init = len(bw) - len(bw_floats)
 
-    cut_idx = [0, len(bw)]
+    cut_idx_bw = 0
+    cut_idx_fw = 0
 
     if most_recent:
         if ends_rejected_both_directions(bw, fw, alpha):
-            return cut_idx
+            return {
+            'start_range': (cut_idx_bw, len(bw)),
+            'extension_range': None
+            }
 
         if not starts_rejected(alpha, bw_floats, 'bw'):
-            cut_idx[0] = idx_of_last_not_rejected(alpha, bw_floats, 'bw', slice_init)
+            cut_idx_bw = idx_of_last_not_rejected(alpha, bw_floats, 'bw')
 
-        if starts_rejected(alpha, bw_floats, 'bw') and not starts_rejected(alpha, fw_floats, 'fw'):
-            cut_idx[1] = idx_of_last_not_rejected(alpha, fw_floats, 'fw', slice_init)
+            if not starts_rejected(alpha, fw_floats, 'fw'):
 
-        return cut_idx
+                cut_idx_fw = slice_init + idx_of_last_not_rejected(alpha, fw_floats, 'fw')
+
+    if cut_idx_fw > cut_idx_bw:
+
+        return {
+            'start_range': (cut_idx_fw, len(bw)),
+            'extension_range': (cut_idx_bw, cut_idx_fw)
+            }
+    else:
+        return {
+            'start_range': (cut_idx_bw, len(bw)),
+            'extension_range': None
+            }
+
 
 
 
