@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rhis_timeseries.evolution.data import slices_incr_len
-from rhis_timeseries.evolution.rhis import rhis_evolution
-from rhis_timeseries.representative.most_recent import representative_slice
+from rhis_ts.utils.data import slices_to_evol
+from rhis_ts.evol.rhis import rhis
+from rhis_ts.repr.most_recent import representative_slice
 
 
 def main():  # noqa: PLR0915
@@ -28,7 +28,7 @@ def main():  # noqa: PLR0915
 
     reprsentative_slice = representative_slice(ts)
 
-    slices = slices_incr_len(ts, test_start)
+    slices = slices_to_evol(ts, test_start)
 
     x_ts = range(len(ts))
     x_rhis_fw = range(9, len(ts))
@@ -65,7 +65,7 @@ def main():  # noqa: PLR0915
     counter = 2
     for mode in modes:
 
-        evol_rhis = rhis_evolution(ts, mode, bidirectional=True)
+        evol_rhis = rhis(ts, mode, bidirectional=True)
         evol_rhis_bw = evol_rhis['backward']
         evol_rhis_fw = evol_rhis['forward']
 

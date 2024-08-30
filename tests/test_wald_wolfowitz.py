@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rhis_timeseries.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
+from rhis_ts.hypothesis_tests.wald_wolfowitz import wald_wolfowitz
 
 
 def test_wald_wolfowitz():

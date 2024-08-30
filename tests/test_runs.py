@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.rhis_timeseries.hypothesis_tests.runs import runs_test, wallismoore
+from src.rhis_ts.hypothesis_tests.runs import runs_test, wallismoore
 
 
 def test_randomness():
