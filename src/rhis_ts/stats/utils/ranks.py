@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_timeseries.error.exception import raise_timeseries_type_error
+from rhis_ts.errors.exc import raise_timeseries_type_error
 
 if TYPE_CHECKING:
-    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
+    from rhis_ts.types.data import TimeSeriesFlex
 
 
 def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:

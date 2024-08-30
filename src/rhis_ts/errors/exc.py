@@ -27,7 +27,7 @@ class Error:
         return {k: str(v) for k, v in asdict(self).items()}
 
 
-def handle_exception_msg(exception: Exception, msg: str) -> Error:
+def handle_exc_msg(exception: Exception, msg: str) -> Error:
     """
     Handle an error message by formatting it into a dictionary.
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.rhis_timeseries.hypothesis_tests.mann_whitney import mann_whitney
+from src.rhis_ts.hypothesis_tests.mann_whitney import mann_whitney
 
 
 def test_mann_whitney():

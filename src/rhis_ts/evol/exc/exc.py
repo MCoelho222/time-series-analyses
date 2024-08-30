@@ -6,17 +6,17 @@ if TYPE_CHECKING:
     import numpy as np
     from pandas import DataFrame
 
-    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
+    from rhis_ts.types.data import TimeSeriesFlex
 
 
-def raise_ts_diff_lengths(bw: TimeSeriesFlex, fw: TimeSeriesFlex):
-    if len(bw) != len(fw):
-        err_msg = "The parameters 'ts', 'bw', and 'fw' must be of the same length."
+def raise_ts_diff_lengths(ba: TimeSeriesFlex, fo: TimeSeriesFlex):
+    if len(ba) != len(fo):
+        err_msg = "The parameters 'ts', 'ba', and 'fo' must be of the same length."
         raise ValueError(err_msg)
 
 
 def raise_starts_rejected(is_reject_arr: np.ndarray[bool], direction: str):
-    start = -1 if direction == 'bw' else 0
+    start = -1 if direction == 'ba' else 0
     if is_reject_arr[start]:
         err_msg = "This function should be called only when the evolution starts not rejected."
         raise ValueError(err_msg)
@@ -28,7 +28,7 @@ def raise_no_evol_process_ran(evol_df: DataFrame | None):
         raise RuntimeError(error_msg)
 
 
-def raise_incorrect_mode_raw(mode: str):
-    if mode == 'raw' or mode is None:
+def raise_incorrect_mode_raw(*, raw: bool):
+    if raw:
         error_msg = "This function works only for 'median', 'mean' and 'min' modes only."
         raise ValueError(error_msg)

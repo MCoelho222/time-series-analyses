@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
-from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected, to_ranks
+from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
-    from rhis_timeseries.types.hypothesis_types import TestResults
-    from rhis_timeseries.types.timeseries_types import TimeSeriesFlex
+    from rhis_ts.types.data import TimeSeriesFlex
+    from rhis_ts.types.stats import TestResults
 
 
 @check_test_args('wald-wolfowitz')
@@ -84,7 +84,6 @@ def wald_wolfowitz(
 
     c =  s2 ** 2 / (n - 1) ** 2
     var_r = a + b - c
-
     var_lim = 0.00001
     if abs(var_r) < var_lim:
         reject = True
@@ -99,7 +98,7 @@ def wald_wolfowitz(
 
 
 if __name__ == "__main__":
-    from rhis_timeseries.evolution.data import slices_to_evol
+    from rhis_ts.utils.data import slices_to_evol
 
     data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
     tss = slices_to_evol(data)

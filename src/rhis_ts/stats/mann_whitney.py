@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_timeseries.hypothesis_tests.decorators.hypothesis_test import check_test_args
-from rhis_timeseries.hypothesis_tests.methods.ranks import ranks_ties_corrected
-from rhis_timeseries.utils.timeseries import break_list_in_equal_parts
+from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.utils.ranks import ranks_ties_corrected
+from rhis_ts.utils.data import break_list_in_equal_parts
 
 if TYPE_CHECKING:
-    from rhis_timeseries.types.hypothesis_types import TestResults
+    from rhis_ts.types.stats import TestResults
 
 
 @check_test_args('mann-whitney')
@@ -124,6 +124,7 @@ def mann_whitney(  # noqa: PLR0913
 
     mean_stat = (n1 * n2) / 2
     var = (n1 * n2 * (n1 + n2 + 1)) / 12
+
     if ties:
         var = ((n1 * n2) / ((n) * (n - 1))) * np.sum(np.array(ranks) ** 2) \
             - ((n1 * n2 * (n + 1) ** 2) / (4 * (n - 1)))
@@ -150,7 +151,7 @@ def mann_whitney(  # noqa: PLR0913
 
 
 if __name__ == "__main__":
-    from rhis_timeseries.evolution.data import slices_to_evol
+    from rhis_ts.utils.data import slices_to_evol
 
     data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
     tss = slices_to_evol(data)

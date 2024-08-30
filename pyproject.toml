@@ -1,5 +1,5 @@
 [project]
-name = "rhis_timeseries"
+name = "rhis_ts"
 description = "Methods for representativeness verification in times series analyses"
 authors = [{name = "Marcelo Coelho", email = "mcoelho2011@hotmail.com"}]
 requires-python = ">=3.8"
@@ -30,7 +30,7 @@ requires = [
 
   [tool.setuptools.dynamic]
     dependencies = {file = ["requirements/requirements.txt"]}
-    version = {attr = "rhis_timeseries.__version__"}
+    version = {attr = "rhis_ts.__version__"}
     readme = {file = ["README.md"], content-type = "text/markdown"}
 
   [tool.setuptools.dynamic.optional-dependencies]
@@ -40,7 +40,7 @@ requires = [
   universal = true
 
 [project.scripts]
-rhis-ts = "rhis_timeseries:__main__.main"
+rhis-ts = "rhis_ts:__main__.main"
 
 [tool.ruff]
   line-length = 128
@@ -109,7 +109,7 @@ rhis-ts = "rhis_timeseries:__main__.main"
     skip-magic-trailing-comma = false
 
   [tool.ruff.isort]
-    known-first-party = ["rhis_timeseries", "tests", "testing"]
+    known-first-party = ["rhis_ts", "tests", "testing"]
     split-on-trailing-comma = true
     required-imports = ["from __future__ import annotations"]
 
