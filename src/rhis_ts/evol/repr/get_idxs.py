@@ -2,18 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-import numpy as np
-
-from rhis_ts.evol.utils.ba_fo import (
+from rhis_ts.evol.exc.exc import raise_ts_diff_lengths
+from rhis_ts.evol.utils.bafo import (
     ends_rejected_both_directions,
     idx_of_last_not_rejected,
     separate_nans_from_evol,
     starts_rejected,
 )
-from rhis_ts.evol.exc.exc import raise_ts_diff_lengths
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
-def repr_rng_no_memo_loss(
+def repr_idxs_from_bafo(
         ba: Iterable[float],
         fo: Iterable[float],
         alpha: float,*,
@@ -59,7 +60,7 @@ def repr_rng_no_memo_loss(
         }
 
 
-def repr_rng_memo_init_loss(ba: np.ndarray[float], fo: np.ndarray[float], alpha: float, sli_init: int):
+def repr_idxs_from_ba(ba: np.ndarray[float], fo: np.ndarray[float], alpha: float, sli_init: int):
     ba_floats_and_nans = separate_nans_from_evol(ba)
     # fo_floats_and_nans = separate_nans_from_evol(fo)
     ba_floats = ba_floats_and_nans[0]
