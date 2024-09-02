@@ -4,7 +4,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rhis_ts.evol.utils.ba_fo import slices2evol
+from rhis_ts.evol.utils.bafo import slices2evol
 
 
 def outliers_summary_evol(slices: list[list[int | float]]):
