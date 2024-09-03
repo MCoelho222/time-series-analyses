@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
 
-from rhis_ts.controllers.rhis_controller import build_init_df, insert_repr_in_df_from_idx
+from rhis_ts.controllers.rhis_controller import build_bafo_init_df, insert_repr_in_df_from_idx
 from rhis_ts.evol.bafo.no_memo import rhis_evol_no_memo
 from rhis_ts.evol.bafo.part_memo import bafo_weak_memo
-from rhis_ts.evol.exc.exc import raise_incorrect_mode_raw, raise_no_evol_process_ran
+from rhis_ts.evol.exc.exc import raise_incorrect_mode_raw, raise_no_evol_process_ran, raise_no_memo_not_performed
+from rhis_ts.evol.plot.no_memo_plot import no_memo_plot
+from rhis_ts.evol.plot.weak_memo_plot import weak_memo_plot
 from rhis_ts.evol.repr.get_idxs import repr_idxs_from_ba
+from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
     from pandas import DataFrame, Series
@@ -19,18 +21,21 @@ if TYPE_CHECKING:
 
 class RHIS:
 
-    def __init__(self,):
-        self.orig_df = None
-        self.evol_df = None
-        self.repr_df = None
+    def __init__(self, df):
         self.raw = False
         self.alpha = 0.05
         self.directions = ('ba', 'fo')
         self.slice_init = None
 
+        self.orig_df = df
+        self.evol_df = build_bafo_init_df(self, self.orig_df.columns, self.orig_df.index)
+        self.repr_idxs = {}
+        self.repr_df = None
+
+        self.no_memo = False
+
     def evol(self,
-            df: DataFrame,
-            target_cols: Iterable[str]|None=None,
+            cols: Iterable[str]|None=None,
             alpha: float=0.05,*,
             raw: bool=False,
             no_memo: bool=True
@@ -82,29 +87,24 @@ class RHIS:
         logger.info("Processing RHIS evolution on dataframe...")
 
         self.alpha = alpha
-        self.orig_df = df
-        self.orig_df = self.orig_df if target_cols is None else self.orig_df[target_cols]
+        evol_cols = cols if cols is not None else self.orig_df.columns
 
-        if raw:
-            self.raw = raw
+        self.raw = raw
+        self.no_memo = no_memo
 
-        orig_cols = self.orig_df.columns
-
-        self.evol_df = build_init_df(self, orig_cols, self.orig_df.index)
-
-        for ts_name in orig_cols:
-            ts = self.orig_df[ts_name]
+        for col in evol_cols:
+            ts = self.orig_df[col]
             if no_memo:
-                self.evol_no_memo(ts, alpha)
+                self._evol_ts_no_memo(ts, alpha)
             else:
-                self.evol_ts(ts, alpha, raw=raw)
+                self._evol_ts_weak_memo(ts, alpha, raw=raw)
 
         logger.info("RHIS evolution on dataframe complete.")
 
-        return self.evol_df
+        return self.evol_df[cols] if cols is not None else self.evol_df
 
 
-    def evol_weak_memo(
+    def _evol_ts_weak_memo(
             self,
             ts: Series,
             alpha: float=0.05,*,
@@ -129,35 +129,56 @@ class RHIS:
             self.evol_df[(ts.name, 'fo')] = fo_evol
             self.evol_df[(ts.name, 'ba')] = ba_evol
 
-    def evol_no_memo(
+        return
+
+
+    def _evol_ts_no_memo(
             self,
             ts: Series,
             alpha: float=0.05,
             ) -> dict[str, list[float | int]]:
 
-        self.slice_init = 5
+        self.slice_init = slice_init(len(ts))
 
         ts_arr = ts.to_numpy()
 
         evol = rhis_evol_no_memo(ts_arr, alpha, self.slice_init)
-        idxs = evol[0]
+        # TODO (Marcelo Coelho): ba  # noqa: TD003
+        self.repr_idxs[ts.name] = evol[0]
         p_evol = evol[1]
 
         self.evol_df[(ts.name, 'fo')] = p_evol
         self.evol_df[(ts.name, 'ba')] = np.nan
 
-        col_tuples = []
-
-        cols = pd.MultiIndex.from_tuples([(ts.name, idx) for idx in idxs])
-        if self.repr_df is None:
-            self.repr_df = pd.DataFrame(columns=cols, index=ts.index)
-        for idx in idxs:
-            col_tuples.append((ts.name, idx))
-            self.repr_df[(ts.name, idx)] = ts[idx[0]: idx[1]].reindex(self.repr_df.index)
+        return
 
 
-    def select_repr(self,) -> DataFrame:
-        logger.info("Selecting representative data...")
+    def build_no_memo_repr_df(self,):
+        logger.info("Building representative dataframe from NO_memo RHIS evolution...")
+        raise_no_evol_process_ran(self.evol_df)
+        raise_no_memo_not_performed(no_memo=self.no_memo)
+
+        orig_cols = self.orig_df.columns
+        repr_cols = []
+        for orig_col in orig_cols:
+            repr_cols.extend([(orig_col, f"{idx[0]}_{idx[1]}") for idx in self.repr_idxs[orig_col]])
+
+        repr_df_cols = pd.MultiIndex.from_tuples(repr_cols)
+        self.repr_df = pd.DataFrame(columns=repr_df_cols, index=self.orig_df.index)
+
+        for col, idx in repr_cols:
+            idxs = idx.split('_')
+            start = int(idxs[0])
+            end = int(idxs[1])
+            self.repr_df[(col, idx)] = self.orig_df.loc[start: end, col].reindex(self.repr_df.index)
+
+        logger.info("Representative dataframe complete.")
+
+        return self.repr_df
+
+
+    def build_weak_memo_repr_df(self,) -> DataFrame:
+        logger.info("Building representative dataframe from WEAK_memo RHIS evolution...")
 
         raise_incorrect_mode_raw(raw=self.raw)
         raise_no_evol_process_ran(self.evol_df)
@@ -178,114 +199,19 @@ class RHIS:
 
             self.repr_df = True
 
-        logger.info("Representative data complete.")
+        logger.info("Representative dataframe complete.")
 
         return self.orig_df
 
 
-    def weak_memo_plot(self,):
-        data_marker_s = 100
-        repr_marker_s = 100
-        cols = set()
-        for col, _ in self.evol_df.columns:
-            cols.add(col)
-
-        for col in cols:
-            ax1 = self.evol_df[(col, 'ba')].plot(
-                    color='k',
-                    alpha=0.1,
-                    linestyle='-',
-                    linewidth=2)
-            ax1 = self.evol_df[(col, 'fo')].plot(
-                    color='k',
-                    alpha=0.1,
-                    linestyle='--',
-                    linewidth=2)
-
-            ax1.axhline(y=0.05, color='r', linestyle='--', alpha=0.5)
-            ax2 = ax1.twinx()
-
-            ax2.scatter(
-                x=self.orig_df.index,
-                y=self.orig_df[col],
-                label=col,
-                color='k',
-                alpha=0.3,
-                edgecolors='none',
-                s=data_marker_s)
-
-            if self.repr_df is not None:
-                ax2.scatter(
-                    x=self.evol_df.index,
-                    y=self.orig_df[col + '_repr'],
-                    marker='*',
-                    label=col + '_repr',
-                    color='tab:green',
-                    edgecolors='none',
-                    s=repr_marker_s)
-                try:
-                    ax2.scatter(
-                        x=self.orig_df.index,
-                        y=self.orig_df[col + '_repr_ext'],
-                        marker='*',
-                        label=col + '_repr_ext',
-                        color='orange',
-                        edgecolors='none',
-                        s=repr_marker_s)
-
-                except KeyError:
-                    pass
-
-            lines1, labels1 = ax1.get_legend_handles_labels()
-            lines2, labels2 = ax2.get_legend_handles_labels()
-            ax2.legend(lines1 + lines2, labels1 + labels2)
-            plt.show()
-
-    def no_memo_plot(self,):
-        data_marker_s = 100
-        cols = set()
-        idxs = {}
-        for col, idx in self.repr_df.columns:
-            cols.add(col)
-            if col in idxs.keys():
-                idxs[col] += [idx]
-            else:
-                idxs[col] = [idx]
-
-        for col in cols:
-            ax1 = self.evol_df[(col, 'ba')].plot(
-                    color='k',
-                    alpha=0.1,
-                    linestyle='-',
-                    linewidth=2)
-            ax1 = self.evol_df[(col, 'fo')].plot(
-                    color='k',
-                    alpha=0.1,
-                    linestyle='--',
-                    linewidth=2)
-
-            ax1.axhline(y=0.05, color='r', linestyle='--', alpha=0.5)
-
-            ax2 = ax1.twinx()
-
-            for idx in idxs[col]:
-                ax2.scatter(
-                    x=self.repr_df.index,
-                    y=self.repr_df[(col, idx)],
-                    label=col,
-                    alpha=0.3,
-                    edgecolors='none',
-                    s=data_marker_s)
-
-            lines1, labels1 = ax1.get_legend_handles_labels()
-            lines2, labels2 = ax2.get_legend_handles_labels()
-            ax2.legend(lines1 + lines2, labels1 + labels2)
-            plt.show()
-
+    def plot(self,):
+        if self.no_memo:
+            no_memo_plot(self)
+        else:
+            weak_memo_plot(self)
 
 if __name__ == '__main__':
 
-    rhis = RHIS()
     # df = pd.read_csv('./data/BigSiouxAnnualQ.csv')
     # df = pd.read_csv('./data/MarchMilwaukeeChloride.csv')
     # df['Time'] = pd.to_datetime(df['Time'].astype(int), format='%Y')
@@ -307,11 +233,13 @@ if __name__ == '__main__':
     # monthly_range = pd.date_range(start='2013-02-20', end='2013-12-20', freq='ME')
     # index = yearly_range.union(monthly_range)
     # index = pd.date_range(start='2000-12-31', end='2022-12-31', freq='YE')
-    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11, 5, 5, 5, 5, 5, 5, 5, 5, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, \
+          11, 5, 5, 5, 5, 5, 5, 5, 5, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
     df = pd.DataFrame({'data': ts})
 
-    evol_df = rhis.evol(df, raw=False)
-    print(evol_df)
+    rhis = RHIS(df)
+    evol_df = rhis.evol()
     # print(rhis.orig_df)
     # rhis_repr_df = rhis.select_repr()
-    rhis.no_memo_plot()
+    rhis.build_no_memo_repr_df()
+    rhis.plot()
