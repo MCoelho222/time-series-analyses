@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.errors.exc import raise_timeseries_type_error
 from rhis_ts.stats.decorators.hyps import check_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
@@ -73,8 +72,6 @@ def runs_test(  # noqa: C901
             was reject.
     ----------------------------------------------------------------------------------
     """
-    raise_timeseries_type_error(ts)
-
     ts = np.array(ts) if isinstance(ts, list) else ts
 
     median = np.median(np.array(ts))

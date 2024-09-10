@@ -6,15 +6,15 @@ from rhis_ts.evol.exc.exc import raise_ts_diff_lengths
 from rhis_ts.evol.utils.bafo import (
     ends_rejected_both_directions,
     idx_of_last_not_rejected,
-    separate_nans_from_evol,
     starts_rejected,
 )
+from rhis_ts.utils.arrays import nans_floats_from_array
 
 if TYPE_CHECKING:
     import numpy as np
 
 
-def repr_idxs_from_bafo(
+def repr_and_extension_slice(
         ba: Iterable[float],
         fo: Iterable[float],
         alpha: float,*,
@@ -23,8 +23,8 @@ def repr_idxs_from_bafo(
 
     raise_ts_diff_lengths(ba, fo)
 
-    ba_floats_and_nans = separate_nans_from_evol(ba)
-    fo_floats_and_nans = separate_nans_from_evol(fo)
+    ba_floats_and_nans = nans_floats_from_array(ba)
+    fo_floats_and_nans = nans_floats_from_array(fo)
 
     ba_floats = ba_floats_and_nans[0]
     fo_floats = fo_floats_and_nans[0]
@@ -60,11 +60,9 @@ def repr_idxs_from_bafo(
         }
 
 
-def repr_idxs_from_ba(ba: np.ndarray[float], fo: np.ndarray[float], alpha: float, sli_init: int):
-    ba_floats_and_nans = separate_nans_from_evol(ba)
-    # fo_floats_and_nans = separate_nans_from_evol(fo)
+def repr_slice(ba: np.ndarray[float], alpha: float, sli_init: int):
+    ba_floats_and_nans = nans_floats_from_array(ba)
     ba_floats = ba_floats_and_nans[0]
-    # fo_floats = fo_floats_and_nans[0]
 
     ba_last = len(ba_floats) + sli_init - 1
     if ba[0] >= alpha:

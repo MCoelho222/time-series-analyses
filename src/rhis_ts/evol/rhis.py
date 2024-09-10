@@ -5,34 +5,43 @@ from typing import TYPE_CHECKING, Iterable
 import numpy as np
 import pandas as pd
 from loguru import logger
+from pandas import DataFrame
 
-from rhis_ts.controllers.rhis_controller import build_bafo_init_df, insert_repr_in_df_from_idx
-from rhis_ts.evol.bafo.no_memo import rhis_evol_no_memo
-from rhis_ts.evol.bafo.part_memo import bafo_weak_memo
+from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
 from rhis_ts.evol.exc.exc import raise_incorrect_mode_raw, raise_no_evol_process_ran, raise_no_memo_not_performed
+from rhis_ts.evol.methods.discard_init_evol import bafo_weak_memo
+from rhis_ts.evol.methods.fixed_start_evol import repr_slice
+from rhis_ts.evol.methods.start_end_evol import restart_evol_on_rhis_reject
 from rhis_ts.evol.plot.no_memo_plot import no_memo_plot
 from rhis_ts.evol.plot.weak_memo_plot import weak_memo_plot
-from rhis_ts.evol.repr.get_idxs import repr_idxs_from_ba
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
-    from pandas import DataFrame, Series
+    from pandas import Series
 
 
 class RHIS:
 
     def __init__(self, df):
         self.raw = False
-        self.alpha = 0.05
         self.directions = ('ba', 'fo')
-        self.slice_init = None
+        self.alpha = 0.05
 
-        self.orig_df = df
-        self.evol_df = build_bafo_init_df(self, self.orig_df.columns, self.orig_df.index)
+        try:
+            self.orig_df = df
+            self.evol_df = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index)
+
+        except AttributeError:
+            msg = "The parameter df should be an instance of pandas.DataFrame."
+            logger.exception(msg)
+
+        self.len_df = len(self.orig_df)
+        self.slice_init = slice_init(self.len_df)
+
         self.repr_idxs = {}
         self.repr_df = None
-
         self.no_memo = False
+
 
     def evol(self,
             cols: Iterable[str]|None=None,
@@ -76,7 +85,7 @@ class RHIS:
 
             Example:
 
-                rhis_evol = {
+                evol = {
                     'r': [0.556, 0.265, 0.945, 0.159],
                     'h': [0.112, 0.232, 0.284, 0.492],
                     'i': [0.253, 0.022, 0.248, 0.995],
@@ -85,23 +94,31 @@ class RHIS:
 
         """
         logger.info("Processing RHIS evolution on dataframe...")
+        try:
 
-        self.alpha = alpha
-        evol_cols = cols if cols is not None else self.orig_df.columns
+            self.alpha = alpha
+            evol_cols = cols if cols is not None else self.orig_df.columns
 
-        self.raw = raw
-        self.no_memo = no_memo
+            self.raw = raw
+            self.no_memo = no_memo
 
-        for col in evol_cols:
-            ts = self.orig_df[col]
-            if no_memo:
-                self._evol_ts_no_memo(ts, alpha)
-            else:
-                self._evol_ts_weak_memo(ts, alpha, raw=raw)
+            for col in evol_cols:
+                ts = self.orig_df[col]
+                if no_memo:
+                    self._evol_ts_no_memo(ts, alpha)
+                else:
+                    self._evol_ts_weak_memo(ts, alpha, raw=raw)
+
+            evol_df = self.evol_df[evol_cols]
+
+        except (ValueError, KeyError):
+            msg = "The evolution process could not be complete."
+            logger.exception(msg)
+            return
 
         logger.info("RHIS evolution on dataframe complete.")
 
-        return self.evol_df[cols] if cols is not None else self.evol_df
+        return evol_df
 
 
     def _evol_ts_weak_memo(
@@ -113,8 +130,8 @@ class RHIS:
 
         ts_arr = ts.to_numpy()
 
-        fo_data = bafo_weak_memo(ts_arr, alpha, raw=raw)
-        ba_data = bafo_weak_memo(ts_arr[::-1], alpha, raw=raw, ba=True)
+        fo_data = bafo_weak_memo(ts_arr, alpha, self.slice_init, raw=raw)
+        ba_data = bafo_weak_memo(ts_arr[::-1], alpha, self.slice_init, raw=raw, ba=True)
         fo_evol = fo_data[0]
         ba_evol = ba_data[0]
 
@@ -138,11 +155,9 @@ class RHIS:
             alpha: float=0.05,
             ) -> dict[str, list[float | int]]:
 
-        self.slice_init = slice_init(len(ts))
-
         ts_arr = ts.to_numpy()
 
-        evol = rhis_evol_no_memo(ts_arr, alpha, self.slice_init)
+        evol = restart_evol_on_rhis_reject(ts_arr, alpha, self.slice_init)
         # TODO (Marcelo Coelho): ba  # noqa: TD003
         self.repr_idxs[ts.name] = evol[0]
         p_evol = evol[1]
@@ -194,7 +209,7 @@ class RHIS:
             for direct in self.directions:
                 evol_bafo[direct] = filtered_evol_df[(orig_col, direct)].to_numpy()
 
-            idx = repr_idxs_from_ba(evol_bafo['ba'], evol_bafo['fo'], self.alpha, self.slice_init)
+            idx = repr_slice(evol_bafo['ba'], evol_bafo['fo'], self.alpha, self.slice_init)
             insert_repr_in_df_from_idx(self, idx, orig_col)
 
             self.repr_df = True

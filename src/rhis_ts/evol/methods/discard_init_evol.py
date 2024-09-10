@@ -9,9 +9,8 @@ from rhis_ts.stats.wald_wolfowitz import wald_wolfowitz
 from rhis_ts.utils.data import slices_to_evol
 
 
-def bafo_init(ts, alpha):
-    slices = slices_to_evol(ts)
-    slice_init = len(slices[0])
+def bafo_init(ts: np.ndarray, alpha: float, sli_init: int):
+    slices = slices_to_evol(ts, sli_init)
     hyps = ['R', 'H', 'I', 'S']
     rhis_tests = [wallismoore, mann_whitney, wald_wolfowitz, mann_kendall]
     test_dict = dict(zip(hyps, rhis_tests))
@@ -23,13 +22,12 @@ def bafo_init(ts, alpha):
             ps.append(test_dict[hyp](sli, alpha=alpha).p_value)
         evol[hyp] = ps
 
-    return evol, slice_init
+    return evol
 
 
-def bafo_weak_memo(ts: np.ndarray, alpha: int,*, raw: bool, ba: bool=False):
-    evol_and_init = bafo_init(ts, alpha)
+def bafo_weak_memo(ts: np.ndarray, alpha: float, sli_init: int,*, raw: bool, ba: bool=False):
+    evol_and_init = bafo_init(ts, alpha, sli_init)
     evol = evol_and_init[0]
-    slice_init = evol_and_init[1]
     check = np.min([evol['R'][0], evol['H'][0], evol['I'][0], evol['S'][0]])
     idx = 0
     if check <= alpha:
@@ -44,17 +42,17 @@ def bafo_weak_memo(ts: np.ndarray, alpha: int,*, raw: bool, ba: bool=False):
                 break
             idx +=1
 
-    fill = np.full(idx + slice_init - 1, np.nan)
+    fill = np.full(idx + sli_init - 1, np.nan)
 
     for hyp, ps in evol.items():
         evol[hyp] = np.append(ps[::-1], fill) if ba else np.append(fill, ps)
 
     if raw:
-        return evol, slice_init
+        return evol
 
     evol = np.min([ps for _, ps in evol.items()], axis=0, keepdims=True).ravel()
 
-    return evol, slice_init
+    return evol
 
 if __name__ == "__main__":
     ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
