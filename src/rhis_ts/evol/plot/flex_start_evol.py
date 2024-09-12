@@ -3,23 +3,22 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 
 
-def plot_flex_start_evol(self,*, ba: bool=True, fo: bool=True):
+def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # noqa: C901
     data_marker_s = 100
     repr_marker_s = 100
     cols = set()
-    print(self.evol_df.columns)
-    for col in self.orig_df.columns:
+    for col, _ in self.evol_df.columns:
         cols.add(col)
 
-    for col in self.orig_df.columns:
-        if self.raw:
+    for col in cols:
+        if use_raw and self.evol_df_raw is not None:
             hypos = ['R', 'H', 'I', 'S']
             colors = ['m', 'c', 'r', 'b']
             for i in range(len(hypos)):
                 if ba:
-                    ax1 = self.evol_df[(col, 'ba', hypos[i])].plot(color=colors[i], alpha=0.7, linestyle='-', linewidth=2)
+                    ax1 = self.evol_df_raw[(col, 'ba', hypos[i])].plot(color=colors[i], alpha=0.7, linestyle='-', linewidth=2)
                 if fo:
-                    ax1 = self.evol_df[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.2, linestyle='-', linewidth=2)
+                    ax1 = self.evol_df_raw[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.2, linestyle='-', linewidth=2)
 
         else:
             if ba:

@@ -8,11 +8,12 @@ from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
-from rhis_ts.evol.exc.exc import raise_incorrect_mode_raw, raise_no_evol_process_ran, raise_start_end_evol_not_performed
+from rhis_ts.evol.exc.exc import raise_start_end_evol_not_performed
 from rhis_ts.evol.methods.discard_init_evol import rhis_evol_flex_start
-from rhis_ts.evol.methods.fixed_start_evol import cut_idx_for_representative
+from rhis_ts.evol.methods.fixed_start_evol import rhis_evol_fixed_start
+from rhis_ts.evol.methods.repr_slice import cut_idx_for_representative
 from rhis_ts.evol.methods.start_end_evol import restart_evol_on_rhis_reject
-from rhis_ts.evol.plot.flex_start_evol import plot_flex_start_evol
+from rhis_ts.evol.plot.flex_start_evol import plot_standard_evol
 from rhis_ts.evol.plot.start_end_evol import plot_start_end_evol
 from rhis_ts.utils.data import slice_init
 
@@ -29,6 +30,7 @@ class RHIS:
 
         self.orig_df = df
         self.evol_df = None
+        self.evol_df_raw = None
         self.len_df = len(self.orig_df)
 
         self.slice_init = slice_init(self.len_df)
@@ -89,13 +91,18 @@ class RHIS:
                 }
 
         """
-        logger.info("Processing RHIS evolution on dataframe...")
+        mode = 'RAW' if raw else 'STANDARD'
+        msg = f"Processing RHIS evolution in {mode} mode..."
+        logger.info(msg)
         self.raw = raw
         self.alpha = alpha
         self.start_end_evol = start_end_evol
 
         try:
-            self.evol_df = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index)
+            if raw:
+                self.evol_df_raw = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index, raw=raw)
+            else:
+                self.evol_df = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index, raw=raw)
         except AttributeError:
             msg = "The parameter df should be an instance of pandas.DataFrame."
             logger.exception(msg)
@@ -107,40 +114,34 @@ class RHIS:
                 if start_end_evol:
                     self._evol_ts_start_end(ts, alpha)
                 else:
-                    self._evol_ts_flex_start(ts, alpha, raw=raw)
+                    self._evol_ts_fixed_start(ts, alpha)
 
-            evol_df = self.evol_df[evol_cols]
+            evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_raw[evol_cols]
 
         except (ValueError, KeyError):
             msg = "The evolution process could not be complete."
             logger.exception(msg)
             return
 
-        logger.info("RHIS evolution on dataframe complete.")
+        logger.info("RHIS evolution successfully complete.")
 
         return evol_df
 
 
-    def _evol_ts_flex_start(
-            self,
-            ts: Series,
-            alpha: float=0.05,*,
-            raw: bool=False
-            ) -> dict[str, list[float | int]]:
-
+    def _evol_ts_fixed_start(self, ts: Series, alpha: float=0.05) -> dict[str, list[float | int]]:
         ts_arr = ts.to_numpy()
 
-        fo_evol = rhis_evol_flex_start(ts_arr, alpha, self.slice_init, raw=raw)
+        fo_evol = rhis_evol_fixed_start(ts_arr, alpha, self.slice_init, raw=self.raw)
         # print(fo_evol)
-        ba_evol = rhis_evol_flex_start(ts_arr[::-1], alpha, self.slice_init, raw=raw, ba=True)
+        ba_evol = rhis_evol_fixed_start(ts_arr[::-1], alpha, self.slice_init, raw=self.raw, ba=True)
         # fo_evol = fo_data[0]
         # ba_evol = ba_data[0]
 
-        if raw:
+        if self.raw:
             for hyp, ps in fo_evol.items():
-                self.evol_df[(ts.name, 'fo', hyp)] = ps
+                self.evol_df_raw[(ts.name, 'fo', hyp)] = ps
             for hyp, ps in ba_evol.items():
-                self.evol_df[(ts.name, 'ba', hyp)] = ps
+                self.evol_df_raw[(ts.name, 'ba', hyp)] = ps
         else:
             self.evol_df[(ts.name, 'fo')] = fo_evol
             self.evol_df[(ts.name, 'ba')] = ba_evol
@@ -167,7 +168,6 @@ class RHIS:
 
     def build_start_end_evol_repr_df(self,):
         logger.info("Building representative dataframe from start_end_evol RHIS evolution...")
-        raise_no_evol_process_ran(self.evol_df)
         raise_start_end_evol_not_performed(start_end_evol=self.start_end_evol)
 
         orig_cols = self.orig_df.columns
@@ -189,11 +189,10 @@ class RHIS:
         return self.repr_df
 
 
-    def build_flex_start_evol_repr_df(self,) -> DataFrame:
-        logger.info("Building representative dataframe from WEAK_memo RHIS evolution...")
-
-        raise_incorrect_mode_raw(raw=self.raw)
-        raise_no_evol_process_ran(self.evol_df)
+    def add_repr_cols_to_df(self,) -> DataFrame:
+        logger.info("Adding new columns to the original dataframe with representative slices - FLEX START mode...")
+        if self.evol_df is None:
+            self.evol()
 
         orig_cols = self.orig_df.columns
 
@@ -211,16 +210,16 @@ class RHIS:
 
             self.repr_df = True
 
-        logger.info("Representative dataframe complete.")
+        logger.info("Representative slices successfully included in original dataframe.")
 
         return self.orig_df
 
 
-    def plot(self,):
+    def plot(self,*, ba: bool=True, fo: bool=True, use_raw: bool=False):
         if self.start_end_evol:
             plot_start_end_evol(self)
         else:
-            plot_flex_start_evol(self)
+            plot_standard_evol(self, ba=ba, fo=fo, use_raw=use_raw)
 
 if __name__ == '__main__':
 
@@ -232,30 +231,30 @@ if __name__ == '__main__':
     # rhis = RHIS(df, index_col=)
 
     # UFPR DATASET
-    # df = pd.read_excel('./data/dataset.xlsx')
-    # df[df.select_dtypes(include=['object']).columns.drop('PONTO')] = \
-    #     df.select_dtypes(include=['object']).drop(columns='PONTO').apply(pd.to_numeric, errors='coerce')
-    # df = df.loc[df['PONTO'] == 'IG5',
-    #             ['DATA', 'TURB (NTU)', 'TP (mg/L)']] # 'TP (mg/L)', 'COLIF_T (NMP/100mL)',
-    # df['DATA'] = pd.to_datetime(df['DATA'])
-    # df.set_index('DATA', inplace=True)
-    # df.dropna(inplace=True)
+    df = pd.read_excel('./data/dataset.xlsx')
+    df[df.select_dtypes(include=['object']).columns.drop('PONTO')] = \
+        df.select_dtypes(include=['object']).drop(columns='PONTO').apply(pd.to_numeric, errors='coerce')
+    df = df.loc[df['PONTO'] == 'IG5',
+                ['DATA', 'TURB (NTU)', 'TP (mg/L)']] # 'TP (mg/L)', 'COLIF_T (NMP/100mL)',
+    df['DATA'] = pd.to_datetime(df['DATA'])
+    df.set_index('DATA', inplace=True)
+    df.dropna(inplace=True)
 
     # yearly_range = pd.date_range(start='2000-01-01', end='2013-01-01', freq='YE')
     # monthly_range = pd.date_range(start='2013-02-20', end='2013-12-20', freq='ME')
     # index = yearly_range.union(monthly_range)
     # index = pd.date_range(start='2000-12-31', end='2022-12-31', freq='YE')
 
-    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, \
-          11, 5, 5, 5, 5, 5, 5, 5, 5, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    # ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, \
+    #       11, 5, 5, 5, 5, 5, 5, 5, 5, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
 
-    df = pd.DataFrame({'data': ts})
+    # df = pd.DataFrame({'data': ts})
 
     rhis = RHIS(df)
-    evol_df = rhis.evol(raw=True)
+    evol_df = rhis.evol(raw=False)
     # print(evol_df)
     # print(rhis.orig_df)
     # rhis_repr_df = rhis.select_repr()
     # rhis.build_start_end_evol_repr_df()
-    rhis.build_flex_start_evol_repr_df()
-    rhis.plot()
+    rhis.add_repr_cols_to_df()
+    rhis.plot(ba=True, fo=False, use_raw=True)

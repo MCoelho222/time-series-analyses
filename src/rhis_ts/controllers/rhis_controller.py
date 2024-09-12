@@ -47,11 +47,11 @@ def insert_repr_in_df_from_idx(self, idx: tuple, df_col: str):
         self.orig_df.loc[:, df_col + '_repr'] = full_ts
 
 
-def build_init_evol_df(self, orig_colnames: list[str], index: Index) -> DataFrame:
+def build_init_evol_df(self, orig_colnames: list[str], index: Index,*, raw: bool) -> DataFrame:
         cols_tuples = []
         for col in orig_colnames:
             for direct in self.directions:
-                if self.raw:
+                if raw:
                     hyps = ['R', 'H', 'I', 'S']
                     for hyp in hyps:
                         cols_tuples.append((col, direct, hyp))
