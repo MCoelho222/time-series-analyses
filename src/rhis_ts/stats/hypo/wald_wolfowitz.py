@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:

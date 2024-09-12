@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ def mann_kendall(
             A time series to be tested.
 
         alternative
-            One of the alternative hypotheses: 'two-sided', 'greater',
+            One of the alternative hypo: 'two-sided', 'greater',
             or 'less'.
 
         alpha

@@ -33,7 +33,7 @@ def raise_incorrect_mode_raw(*, raw: bool):
         error_msg = "This function works only for 'median', 'mean' and 'min' modes only."
         raise ValueError(error_msg)
 
-def raise_no_memo_not_performed(*, no_memo: bool):
-    if not no_memo:
-        error_msg = "You need to run the evolution process with no_memo=True."
+def raise_start_end_evol_not_performed(*, start_end_evol: bool):
+    if not start_end_evol:
+        error_msg = "You need to run the evolution process with start_end_evol=True."
         raise ValueError(error_msg)

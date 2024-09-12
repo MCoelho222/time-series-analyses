@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ def runs_test(  # noqa: C901
     Apply the Single-Sample Runs Test in on a time series. Uses the median as a
     criteria for defining runs (up or down).
 
-    Hypotheses
+    hypo
     ----------
 
         Null hypothesis
@@ -51,7 +51,7 @@ def runs_test(  # noqa: C901
             The time series (1D list or numpy ndarray).
 
         alternative
-            One of the alternative hypotheses:
+            One of the alternative hypo:
                 two-sided
                 greater
                 less

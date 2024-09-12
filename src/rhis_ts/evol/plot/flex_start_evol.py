@@ -3,24 +3,38 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 
 
-def weak_memo_plot(self,):
+def plot_flex_start_evol(self,*, ba: bool=True, fo: bool=True):
     data_marker_s = 100
     repr_marker_s = 100
     cols = set()
-    for col, _ in self.evol_df.columns:
+    print(self.evol_df.columns)
+    for col in self.orig_df.columns:
         cols.add(col)
 
-    for col in cols:
-        ax1 = self.evol_df[(col, 'ba')].plot(
-                color='k',
-                alpha=0.1,
-                linestyle='-',
-                linewidth=2)
-        ax1 = self.evol_df[(col, 'fo')].plot(
-                color='k',
-                alpha=0.1,
-                linestyle='--',
-                linewidth=2)
+    for col in self.orig_df.columns:
+        if self.raw:
+            hypos = ['R', 'H', 'I', 'S']
+            colors = ['m', 'c', 'r', 'b']
+            for i in range(len(hypos)):
+                if ba:
+                    ax1 = self.evol_df[(col, 'ba', hypos[i])].plot(color=colors[i], alpha=0.7, linestyle='-', linewidth=2)
+                if fo:
+                    ax1 = self.evol_df[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.2, linestyle='-', linewidth=2)
+
+        else:
+            if ba:
+                ax1 = self.evol_df[(col, 'ba')].plot(
+                        color='k',
+                        alpha=0.1,
+                        linestyle='-',
+                        linewidth=2)
+
+            if fo:
+                ax1 = self.evol_df[(col, 'fo')].plot(
+                        color='k',
+                        alpha=0.1,
+                        linestyle='--',
+                        linewidth=2)
 
         ax1.axhline(y=0.05, color='r', linestyle='--', alpha=0.5)
         ax2 = ax1.twinx()
@@ -30,7 +44,7 @@ def weak_memo_plot(self,):
             y=self.orig_df[col],
             label=col,
             color='k',
-            alpha=0.3,
+            alpha=0.5,
             edgecolors='none',
             s=data_marker_s)
 

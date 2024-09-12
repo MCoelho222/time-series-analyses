@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 
-from rhis_ts.stats.hyp_testing.errors.exc import (
+from rhis_ts.stats.hypo.errors.exc import (
     raise_if_alpha_not_valid,
     raise_if_not_bool,
     raise_if_not_list_or_array_of_nums,

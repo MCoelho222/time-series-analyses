@@ -60,7 +60,7 @@ def repr_and_extension_slice(
         }
 
 
-def repr_slice(ba: np.ndarray[float], alpha: float, sli_init: int):
+def cut_idx_for_representative(ba: np.ndarray[float], alpha: float, sli_init: int):
     ba_floats_and_nans = nans_floats_from_array(ba)
     ba_floats = ba_floats_and_nans[0]
 

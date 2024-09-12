@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rhis_ts.stats.utils.rhis import min_from_rhis
+from rhis_ts.stats.utils.rhis import calculate_rhis
 
 
 def restart_evol_on_rhis_reject(ts: np.ndarray, alpha, sli_init: int):
@@ -15,7 +15,7 @@ def restart_evol_on_rhis_reject(ts: np.ndarray, alpha, sli_init: int):
     end = start + sli_init
     while end <= len(ts) and start <= len(ts) - sli_init:
         sli = ts[start:end]
-        pval = min_from_rhis(sli, alpha)
+        pval = calculate_rhis(sli, alpha)
         p_evol.append(pval)
         if end == len(ts):
             ts_repr_idxs.append((start, end))
