@@ -13,7 +13,7 @@ def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # 
         cols.add(col)
 
     for col in cols:
-        raise_raw_evol_not_performed(use_raw, self.evol_df_raw)
+        raise_raw_evol_not_performed(self.evol_df_raw, use_raw=use_raw)
         if use_raw and self.evol_df_raw is not None:
             hypos = ['R', 'H', 'I', 'S']
             colors = ['m', 'c', 'r', 'b']
