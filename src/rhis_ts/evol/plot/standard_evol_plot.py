@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import matplotlib.pyplot as plt
 
+from rhis_ts.evol.errors.exceptions import raise_raw_evol_not_performed
+
 
 def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # noqa: C901
     data_marker_s = 100
@@ -11,6 +13,7 @@ def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # 
         cols.add(col)
 
     for col in cols:
+        raise_raw_evol_not_performed(use_raw, self.evol_df_raw)
         if use_raw and self.evol_df_raw is not None:
             hypos = ['R', 'H', 'I', 'S']
             colors = ['m', 'c', 'r', 'b']

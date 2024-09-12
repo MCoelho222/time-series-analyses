@@ -5,13 +5,19 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import numpy as np
 
-    # from pandas import DataFrame
+    from pandas import DataFrame
     from rhis_ts.types.data import TimeSeriesFlex
 
 
 def raise_ts_diff_lengths(ba: TimeSeriesFlex, fo: TimeSeriesFlex):
     if len(ba) != len(fo):
         err_msg = "The parameters 'ts', 'ba', and 'fo' must be of the same length."
+        raise ValueError(err_msg)
+    
+
+def raise_raw_evol_not_performed(use_raw: bool, df: DataFrame):
+    if use_raw and df is None:
+        err_msg = "No evolution process ran in raw mode, use_raw should be False."
         raise ValueError(err_msg)
 
 

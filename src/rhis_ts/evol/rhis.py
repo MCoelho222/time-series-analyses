@@ -8,13 +8,12 @@ from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
-from rhis_ts.evol.exc.exc import raise_start_end_evol_not_performed
-from rhis_ts.evol.methods.discard_init_evol import rhis_evol_flex_start
+from rhis_ts.evol.errors.exceptions import raise_start_end_evol_not_performed
 from rhis_ts.evol.methods.fixed_start_evol import rhis_evol_fixed_start
 from rhis_ts.evol.methods.repr_slice import cut_idx_for_representative
 from rhis_ts.evol.methods.start_end_evol import restart_evol_on_rhis_reject
-from rhis_ts.evol.plot.flex_start_evol import plot_standard_evol
-from rhis_ts.evol.plot.start_end_evol import plot_start_end_evol
+from rhis_ts.evol.plot.standard_evol_plot import plot_standard_evol
+from rhis_ts.evol.plot.start_end_evol_plot import plot_start_end_evol
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -132,10 +131,7 @@ class RHIS:
         ts_arr = ts.to_numpy()
 
         fo_evol = rhis_evol_fixed_start(ts_arr, alpha, self.slice_init, raw=self.raw)
-        # print(fo_evol)
         ba_evol = rhis_evol_fixed_start(ts_arr[::-1], alpha, self.slice_init, raw=self.raw, ba=True)
-        # fo_evol = fo_data[0]
-        # ba_evol = ba_data[0]
 
         if self.raw:
             for hyp, ps in fo_evol.items():
@@ -257,4 +253,4 @@ if __name__ == '__main__':
     # rhis_repr_df = rhis.select_repr()
     # rhis.build_start_end_evol_repr_df()
     rhis.add_repr_cols_to_df()
-    rhis.plot(ba=True, fo=False, use_raw=True)
+    rhis.plot(ba=True, fo=False, use_raw=False)

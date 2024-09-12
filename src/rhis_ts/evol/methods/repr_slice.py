@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-from rhis_ts.evol.exc.exc import raise_ts_diff_lengths
+from rhis_ts.evol.errors.exceptions import raise_ts_diff_lengths
 from rhis_ts.evol.utils.bafo import (
     ends_rejected_both_directions,
     idx_of_last_not_rejected,
