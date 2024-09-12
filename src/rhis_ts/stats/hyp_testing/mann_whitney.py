@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 from rhis_ts.utils.data import break_list_in_equal_parts
 
@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('mann-whitney')
+@check_hyp_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
-        y: list[int | float] | None = None,
-        alternative: str='two-sided',
         alpha: float=0.05,
+        alternative: str='two-sided',
+        y: list[int | float] | None = None,
         *,
         continuity: bool=True,
         ties: bool=True,

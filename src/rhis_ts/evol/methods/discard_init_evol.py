@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import numpy as np
 
-from rhis_ts.stats.mann_kendall import mann_kendall
-from rhis_ts.stats.mann_whitney import mann_whitney
-from rhis_ts.stats.runs import wallismoore
-from rhis_ts.stats.wald_wolfowitz import wald_wolfowitz
+from rhis_ts.stats.hyp_testing.mann_kendall import mann_kendall
+from rhis_ts.stats.hyp_testing.mann_whitney import mann_whitney
+from rhis_ts.stats.hyp_testing.runs import wallismoore
+from rhis_ts.stats.hyp_testing.wald_wolfowitz import wald_wolfowitz
 from rhis_ts.utils.data import slices_to_evol
 
 
-def bafo_init(ts: np.ndarray, alpha: float, sli_init: int):
+def rhis_evol_raw(ts: np.ndarray, alpha: float, sli_init: int):
     slices = slices_to_evol(ts, sli_init)
     hyps = ['R', 'H', 'I', 'S']
     rhis_tests = [wallismoore, mann_whitney, wald_wolfowitz, mann_kendall]
@@ -25,9 +25,8 @@ def bafo_init(ts: np.ndarray, alpha: float, sli_init: int):
     return evol
 
 
-def bafo_weak_memo(ts: np.ndarray, alpha: float, sli_init: int,*, raw: bool, ba: bool=False):
-    evol_and_init = bafo_init(ts, alpha, sli_init)
-    evol = evol_and_init[0]
+def rhis_evol_flex_start_idx(ts: np.ndarray, alpha: float, sli_init: int,*, raw: bool, ba: bool=False):
+    evol = rhis_evol_raw(ts, alpha, sli_init)
     check = np.min([evol['R'][0], evol['H'][0], evol['I'][0], evol['S'][0]])
     idx = 0
     if check <= alpha:
@@ -36,7 +35,7 @@ def bafo_weak_memo(ts: np.ndarray, alpha: float, sli_init: int,*, raw: bool, ba:
 
         while True:
             new_data = data[idx:]
-            evol = bafo_init(new_data, alpha)[0]
+            evol = rhis_evol_raw(new_data, alpha)
             check_2 = np.min([evol['R'][0], evol['H'][0], evol['I'][0], evol['S'][0]])
             if check_2 > alpha:
                 break
@@ -56,5 +55,5 @@ def bafo_weak_memo(ts: np.ndarray, alpha: float, sli_init: int,*, raw: bool, ba:
 
 if __name__ == "__main__":
     ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
-    # print(bafo_weak_memo(ts, 0.05, raw=True))
-    print(bafo_weak_memo(ts[::-1], 0.05, raw=False, ba=True))
+    # print(rhis_evol_flex_start_idx(ts, 0.05, raw=True))
+    print(rhis_evol_flex_start_idx(ts[::-1], 0.05, raw=False, ba=True))

@@ -6,18 +6,18 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('mann-kendall')
+@check_hyp_test_args('mann-kendall')
 def mann_kendall(
         ts: list[int|float] | np.ndarray[int|float],
-        alternative: str = 'two-sided',
         alpha: float=0.05,
+        alternative: str = 'two-sided',
     ) -> TestResults:
     """
     ---------------------------------------------------------------------------

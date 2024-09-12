@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('runs_test')
+@check_hyp_test_args('runs_test')
 def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
-        alternative: str = 'two-sided',
-        alpha: float=0.05,*,
+        alpha: float=0.05,
+        alternative: str = 'two-sided',*,
         continuity: bool=True
         ) -> TestResults:
     """
@@ -130,11 +130,11 @@ def runs_test(  # noqa: C901
     return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
 
 
-@check_test_args('wallis-moore')
+@check_hyp_test_args('wallis-moore')
 def wallismoore(
         ts: TimeSeriesFlex,
+        alpha: float = 0.05,
         alternative: str = 'two-sided',
-        alpha: float=0.05,
     ) -> TestResults:
     """
     ---------------------------------------------------------------------------------

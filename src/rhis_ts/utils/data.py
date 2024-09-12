@@ -63,8 +63,9 @@ def slices_to_evol(ts: TimeSeriesFlex, init: int) -> list[list[int | float]]:
             slices.append(ts[: i + start])
 
         return slices
+
     except TypeError as exc:
-        return handle_exc_msg(exc, 'ts must be list | numpy.ndarray, start must be integer')
+        return handle_exc_msg(exc, "The parameter ts should be a list or numpy.ndarray, and the init should be an integer")
 
 
 def calc_time_rng_of_slices(df_index: DatetimeIndex, slice_init: int):

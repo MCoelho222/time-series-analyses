@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rhis_ts.stats.utils.rhis_calc import min_from_rhis
+from rhis_ts.stats.utils.rhis import min_from_rhis
 
 
 def restart_evol_on_rhis_reject(ts: np.ndarray, alpha, sli_init: int):

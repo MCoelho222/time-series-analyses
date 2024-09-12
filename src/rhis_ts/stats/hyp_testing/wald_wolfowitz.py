@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hyp_testing.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('wald-wolfowitz')
+@check_hyp_test_args('wald-wolfowitz')
 def wald_wolfowitz(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,*,

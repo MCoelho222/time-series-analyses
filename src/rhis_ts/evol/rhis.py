@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
 from rhis_ts.evol.exc.exc import raise_incorrect_mode_raw, raise_no_evol_process_ran, raise_no_memo_not_performed
-from rhis_ts.evol.methods.discard_init_evol import bafo_weak_memo
+from rhis_ts.evol.methods.discard_init_evol import rhis_evol_flex_start_idx
 from rhis_ts.evol.methods.fixed_start_evol import repr_slice
 from rhis_ts.evol.methods.start_end_evol import restart_evol_on_rhis_reject
 from rhis_ts.evol.plot.no_memo_plot import no_memo_plot
@@ -95,7 +95,6 @@ class RHIS:
         """
         logger.info("Processing RHIS evolution on dataframe...")
         try:
-
             self.alpha = alpha
             evol_cols = cols if cols is not None else self.orig_df.columns
 
@@ -130,8 +129,8 @@ class RHIS:
 
         ts_arr = ts.to_numpy()
 
-        fo_data = bafo_weak_memo(ts_arr, alpha, self.slice_init, raw=raw)
-        ba_data = bafo_weak_memo(ts_arr[::-1], alpha, self.slice_init, raw=raw, ba=True)
+        fo_data = rhis_evol_flex_start_idx(ts_arr, alpha, self.slice_init, raw=raw)
+        ba_data = rhis_evol_flex_start_idx(ts_arr[::-1], alpha, self.slice_init, raw=raw, ba=True)
         fo_evol = fo_data[0]
         ba_evol = ba_data[0]
 
