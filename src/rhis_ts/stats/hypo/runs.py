@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.errors.exc import raise_timeseries_type_error
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
@@ -14,11 +13,11 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('runs_test')
+@check_hyp_test_args('runs_test')
 def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
-        alternative: str = 'two-sided',
-        alpha: float=0.05,*,
+        alpha: float=0.05,
+        alternative: str = 'two-sided',*,
         continuity: bool=True
         ) -> TestResults:
     """
@@ -26,7 +25,7 @@ def runs_test(  # noqa: C901
     Apply the Single-Sample Runs Test in on a time series. Uses the median as a
     criteria for defining runs (up or down).
 
-    Hypotheses
+    hypo
     ----------
 
         Null hypothesis
@@ -52,7 +51,7 @@ def runs_test(  # noqa: C901
             The time series (1D list or numpy ndarray).
 
         alternative
-            One of the alternative hypotheses:
+            One of the alternative hypo:
                 two-sided
                 greater
                 less
@@ -73,8 +72,6 @@ def runs_test(  # noqa: C901
             was reject.
     ----------------------------------------------------------------------------------
     """
-    raise_timeseries_type_error(ts)
-
     ts = np.array(ts) if isinstance(ts, list) else ts
 
     median = np.median(np.array(ts))
@@ -133,11 +130,11 @@ def runs_test(  # noqa: C901
     return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
 
 
-@check_test_args('wallis-moore')
+@check_hyp_test_args('wallis-moore')
 def wallismoore(
         ts: TimeSeriesFlex,
+        alpha: float = 0.05,
         alternative: str = 'two-sided',
-        alpha: float=0.05,
     ) -> TestResults:
     """
     ---------------------------------------------------------------------------------

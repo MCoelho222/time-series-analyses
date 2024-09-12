@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rhis_ts.utils.data import slices_to_evol
-from rhis_ts.evol.rhis import rhis
 from rhis_ts.repr.most_recent import representative_slice
+from rhis_ts.rhis_evol.rhis import rhis
+from rhis_ts.utils.data import slices_to_evol
 
 
 def main():  # noqa: PLR0915

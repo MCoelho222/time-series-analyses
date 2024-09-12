@@ -9,14 +9,6 @@ if TYPE_CHECKING:
     from rhis_ts.types.data import TimeSeriesFlex
 
 
-def separate_nans_from_evol(ps: TimeSeriesFlex) -> TimeSeriesFlex:
-    ps_mask = np.isnan(ps)
-    ps_nan = ps[ps_mask]
-    ps_floats = ps[~ps_mask]
-
-    return ps_floats, ps_nan
-
-
 def ends_rejected_both_directions(ba: TimeSeriesFlex, fo: TimeSeriesFlex, alpha) -> bool:
     return ba[0] > alpha or fo[-1] > alpha
 
@@ -28,7 +20,7 @@ def starts_rejected(alpha: float, ps: TimeSeriesFlex, direction: str) -> bool:
         return ps[0] <= alpha
 
 
-def idx_of_last_not_rejected(alpha, ps: TimeSeriesFlex, direction: str):
+def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str):
     data = ps[:]
     if direction == 'fo':
         data = ps[::-1]

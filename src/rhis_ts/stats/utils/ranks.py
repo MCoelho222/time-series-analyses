@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.errors.exc import raise_timeseries_type_error
-
 if TYPE_CHECKING:
     from rhis_ts.types.data import TimeSeriesFlex
 
@@ -68,8 +66,6 @@ def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
         ranks will be in the original time series order.
     -----------------------------------------------------------------
     """
-    raise_timeseries_type_error(ts)
-
     ranks = np.array(to_ranks(ts), dtype=float)
 
     ts_sorted = np.sort(ts)

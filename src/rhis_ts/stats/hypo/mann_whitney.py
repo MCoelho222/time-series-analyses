@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.decorators.hyps import check_test_args
+from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 from rhis_ts.utils.data import break_list_in_equal_parts
 
@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_test_args('mann-whitney')
+@check_hyp_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
-        y: list[int | float] | None = None,
-        alternative: str='two-sided',
         alpha: float=0.05,
+        alternative: str='two-sided',
+        y: list[int | float] | None = None,
         *,
         continuity: bool=True,
         ties: bool=True,
@@ -42,7 +42,7 @@ def mann_whitney(  # noqa: PLR0913
         - The underlying distributions from which the samples are derived
           are identical in shape.
 
-    Null and Alternative Hypotheses
+    Null and Alternative hypo
 
         H0: prob[x > y] = 0.5
 
@@ -97,7 +97,6 @@ def mann_whitney(  # noqa: PLR0913
     g1 = x[:] if isinstance(x, list) else x[:].tolist()
     g2 = y[:] if isinstance(y, list) else y[:].tolist()
 
-
     gs_concat = g1 + g2
     gs_sorted = np.sort(gs_concat)
 
@@ -139,10 +138,8 @@ def mann_whitney(  # noqa: PLR0913
     if alternative == 'two-sided':
         p = p * 2
         reject = p < alpha
-
     if alternative == 'less':
         reject = rank_sum1 < rank_sum2 and p < alpha
-
     if alternative == 'greater':
         reject = rank_sum1 > rank_sum2 and p < alpha
 
