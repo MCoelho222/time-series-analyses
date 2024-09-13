@@ -169,7 +169,7 @@ class RHIS:
         return self.orig_df
 
 
-    def plot(self,*, rhis: bool=False, show_repr: bool=True):
+    def plot(self, savefig_path: str,*, rhis: bool=False, show_repr: bool=True):
         cols = set()
         for col, _ in self.evol_df.columns:
             cols.add(col)
@@ -186,7 +186,7 @@ class RHIS:
 
             stat_ax = plot_rhis_stats_evol(col, self.evol_df, self.direction)
             data_ax1 = plot_data(stat_ax, col, self.orig_df, show_repr=show_repr)
-            finalize_plot(stat_ax, data_ax1, col, self.direction)
+            finalize_plot(stat_ax, data_ax1, col, self.direction, savefig_path)
 
 
 if __name__ == '__main__':

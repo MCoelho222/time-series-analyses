@@ -1,0 +1,9 @@
+loguru
+matplotlib
+numpy
+pandas
+scipy
+
+[dev]
+covdefaults
+pytest
