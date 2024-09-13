@@ -1,59 +1,70 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 
-from rhis_ts.evol.errors.exceptions import raise_raw_evol_not_performed
+from rhis_ts.evol.errors.exceptions import raise_rhis_evol_not_performed
 
+if TYPE_CHECKING:
+    from pandas import DataFrame
 
-def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # noqa: C901
-    data_marker_s = 100
-    repr_marker_s = 100
+def plot_standard_evol(  # noqa: C901, PLR0913
+        orig_df: DataFrame,
+        evol_df: DataFrame,
+        evol_df_rhis: DataFrame,*,
+        ba: bool=True,
+        fo: bool=True,
+        rhis: bool=False,
+        show_repr: bool=True):
+    data_marker_s = 120
+    repr_marker_s = 120
     cols = set()
-    for col, _ in self.evol_df.columns:
+    for col, _ in evol_df.columns:
         cols.add(col)
 
     for col in cols:
-        raise_raw_evol_not_performed(self.evol_df_raw, use_raw=use_raw)
-        if use_raw and self.evol_df_raw is not None:
+        raise_rhis_evol_not_performed(evol_df_rhis, rhis=rhis)
+        if rhis and evol_df_rhis is not None:
             hypos = ['R', 'H', 'I', 'S']
             colors = ['m', 'c', 'r', 'b']
             for i in range(len(hypos)):
                 if ba:
-                    ax1 = self.evol_df_raw[(col, 'ba', hypos[i])].plot(color=colors[i], alpha=0.7, linestyle='-', linewidth=2)
+                    ax1 = evol_df_rhis[(col, 'ba', hypos[i])].plot(color=colors[i], alpha=0.7, linestyle='-', linewidth=2)
                 if fo:
-                    ax1 = self.evol_df_raw[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.2, linestyle='-', linewidth=2)
+                    ax1 = evol_df_rhis[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.2, linestyle='-', linewidth=2)
 
         else:
             if ba:
-                ax1 = self.evol_df[(col, 'ba')].plot(
+                ax1 = evol_df[(col, 'ba')].plot(
                         color='k',
-                        alpha=0.1,
+                        alpha=0.2,
                         linestyle='-',
                         linewidth=2)
 
             if fo:
-                ax1 = self.evol_df[(col, 'fo')].plot(
+                ax1 = evol_df[(col, 'fo')].plot(
                         color='k',
                         alpha=0.1,
                         linestyle='--',
                         linewidth=2)
 
-        ax1.axhline(y=0.05, color='r', linestyle='--', alpha=0.5)
+        ax1.axhline(y=0.05, color='r', linestyle='--', alpha=0.4)
         ax2 = ax1.twinx()
 
         ax2.scatter(
-            x=self.orig_df.index,
-            y=self.orig_df[col],
+            x=orig_df.index,
+            y=orig_df[col],
             label=col,
             color='k',
-            alpha=0.5,
+            alpha=0.7,
             edgecolors='none',
             s=data_marker_s)
 
-        if self.repr_df is not None:
+        if show_repr:
             ax2.scatter(
-                x=self.evol_df.index,
-                y=self.orig_df[col + '_repr'],
+                x=evol_df.index,
+                y=orig_df[col + '_repr'],
                 marker='*',
                 label=col + '_repr',
                 color='tab:green',
@@ -61,8 +72,8 @@ def plot_standard_evol(self,*, ba: bool=True, fo: bool=True, use_raw: bool):  # 
                 s=repr_marker_s)
             try:
                 ax2.scatter(
-                    x=self.orig_df.index,
-                    y=self.orig_df[col + '_repr_ext'],
+                    x=orig_df.index,
+                    y=orig_df[col + '_repr_ext'],
                     marker='*',
                     label=col + '_repr_ext',
                     color='orange',

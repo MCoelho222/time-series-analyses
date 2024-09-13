@@ -15,9 +15,9 @@ def raise_ts_diff_lengths(ba: TimeSeriesFlex, fo: TimeSeriesFlex):
         raise ValueError(err_msg)
 
 
-def raise_raw_evol_not_performed(df: DataFrame,*, use_raw: bool):
-    if use_raw and df is None:
-        err_msg = "No evolution process ran in raw mode, use_raw should be False."
+def raise_rhis_evol_not_performed(df: DataFrame,*, rhis: bool):
+    if rhis and df is None:
+        err_msg = "No evol process ran in 'rhis' mode, rhis should be False."
         raise ValueError(err_msg)
 
 
