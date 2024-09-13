@@ -20,7 +20,7 @@ def starts_rejected(alpha: float, ps: TimeSeriesFlex, direction: str) -> bool:
         return ps[0] <= alpha
 
 
-def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str):
+def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str, sli_init: int):
     data = ps[:]
     if direction == 'fo':
         data = ps[::-1]
@@ -33,6 +33,6 @@ def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str):
         idx += 1
 
     if direction == 'fo':
-        idx = len(ps) - idx
+        idx = len(ps) - idx + sli_init
 
     return idx

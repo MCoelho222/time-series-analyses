@@ -9,34 +9,34 @@ from rhis_ts.evol.utils.bafo import (
     idx_of_last_not_rejected,
     starts_rejected,
 )
-from rhis_ts.utils.arrays import nans_floats_from_array
+from rhis_ts.utils.arrays import nans_nums_from_array
 
 if TYPE_CHECKING:
     import numpy as np
 
 
-def cut_idx_for_representative(ba: np.ndarray[float], alpha: float, sli_init: int):
-    ba_floats_and_nans = nans_floats_from_array(ba)
-    ba_floats = ba_floats_and_nans[0]
+def repr_slice_idxs(ps: np.ndarray[float], alpha: float, sli_init: int, direction: str):
+    ps_nums_and_nans = nans_nums_from_array(ps)
+    ps_nums = ps_nums_and_nans
 
-    ba_last = len(ba_floats) + sli_init - 1
-    if ba[0] >= alpha:
-        return (0, ba_last)
+    ps_last = len(ps_nums) + sli_init - 1
+    if ps[0] >= alpha:
+        return (0, ps_last)
 
-    return idx_of_last_not_rejected(alpha, ba_floats, 'ba'), ba_last
+    return idx_of_last_not_rejected(alpha, ps_nums, direction, sli_init), ps_last
 
 
 def repr_and_extension_slice(ba: Iterable[float], fo: Iterable[float], alpha: float,*, most_recent: bool) -> Iterable[float]:
 
     raise_ts_diff_lengths(ba, fo)
 
-    ba_floats_and_nans = nans_floats_from_array(ba)
-    fo_floats_and_nans = nans_floats_from_array(fo)
+    ba_nums_and_nans = nans_nums_from_array(ba)
+    fo_nums_and_nans = nans_nums_from_array(fo)
 
-    ba_floats = ba_floats_and_nans[0]
-    fo_floats = fo_floats_and_nans[0]
+    ba_nums = ba_nums_and_nans[0]
+    fo_floats = fo_nums_and_nans[0]
 
-    slice_init = len(ba) - len(ba_floats)
+    slice_init = len(ba) - len(ba_nums)
 
     cut_idx_ba = 0
     cut_idx_fo = 0
@@ -48,8 +48,8 @@ def repr_and_extension_slice(ba: Iterable[float], fo: Iterable[float], alpha: fl
             'ext_rng': None
             }
 
-        if not starts_rejected(alpha, ba_floats, 'ba'):
-            cut_idx_ba = idx_of_last_not_rejected(alpha, ba_floats, 'ba')
+        if not starts_rejected(alpha, ba_nums, 'ba'):
+            cut_idx_ba = idx_of_last_not_rejected(alpha, ba_nums, 'ba')
 
             if not starts_rejected(alpha, fo_floats, 'fo'):
 

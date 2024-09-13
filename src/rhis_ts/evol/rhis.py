@@ -2,18 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-import numpy as np
 import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
-from rhis_ts.evol.errors.exceptions import raise_start_end_evol_not_performed
-from rhis_ts.evol.methods.fixed_start_evol import rhis_evol_fixed_start
-from rhis_ts.evol.methods.repr_slice import cut_idx_for_representative
-from rhis_ts.evol.methods.start_end_evol import restart_evol_on_rhis_reject
-from rhis_ts.evol.plot.standard_evol_plot import plot_standard_evol
-from rhis_ts.evol.plot.start_end_evol_plot import plot_start_end_evol
+from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
+from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
+from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol, plot_rhis_stats_evol
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -23,28 +19,29 @@ if TYPE_CHECKING:
 class RHIS:
 
     def __init__(self, df):
-        self.raw = False
-        self.directions = ('ba', 'fo')
+        self.rhis = None
+        self.stat = None
         self.alpha = 0.05
+        self.direction = None
 
         self.orig_df = df
         self.evol_df = None
-        self.evol_df_raw = None
+        self.evol_df_rhis = None
         self.len_df = len(self.orig_df)
 
         self.slice_init = slice_init(self.len_df)
 
         self.repr_idxs = {}
-        self.repr_df = None
+        self.repr_on = False
 
         self.start_end_evol = False
 
 
     def evol(self,
             cols: Iterable[str]|None=None,
+            stat: str | None='min',
             alpha: float=0.05,*,
-            raw: bool=False,
-            start_end_evol: bool=False
+            rhis: bool=False
             ) -> dict[str, list[float|int]]:
         """
         Calculate randomness, homogeneity, independence and stationarity (rhis)
@@ -90,18 +87,20 @@ class RHIS:
                 }
 
         """
-        mode = 'RAW' if raw else 'STANDARD'
-        msg = f"Processing RHIS evolution in {mode} mode..."
+        mode = 'RHIS' if rhis else 'STAT'
+        msg = f"Processing RHIS evol in {mode.upper()} mode..."
         logger.info(msg)
-        self.raw = raw
         self.alpha = alpha
-        self.start_end_evol = start_end_evol
+        self.rhis = rhis
+        self.stat = stat
 
         try:
-            if raw:
-                self.evol_df_raw = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index, raw=raw)
+            init_df = build_init_evol_df(self.orig_df.columns, self.orig_df.index, rhis=self.rhis)
+
+            if rhis:
+                self.evol_df_rhis = init_df
             else:
-                self.evol_df = build_init_evol_df(self, self.orig_df.columns, self.orig_df.index, raw=raw)
+                self.evol_df = init_df
         except AttributeError:
             msg = "The parameter df should be an instance of pandas.DataFrame."
             logger.exception(msg)
@@ -110,85 +109,44 @@ class RHIS:
             evol_cols = cols if cols is not None else self.orig_df.columns
             for col in evol_cols:
                 ts = self.orig_df[col]
-                if start_end_evol:
-                    self._evol_ts_start_end(ts, alpha)
-                else:
-                    self._evol_ts_fixed_start(ts, alpha)
+                self._ts_evol(ts, alpha)
 
-            evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_raw[evol_cols]
+            evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_rhis[evol_cols]
 
         except (ValueError, KeyError):
-            msg = "The evolution process could not be complete."
+            msg = "Evol process could not be complete."
             logger.exception(msg)
+
             return
 
-        logger.info("RHIS evolution successfully complete.")
+        logger.info("RHIS evol successfully complete.")
 
         return evol_df
 
 
-    def _evol_ts_fixed_start(self, ts: Series, alpha: float=0.05) -> dict[str, list[float | int]]:
+    def _ts_evol(self, ts: Series, alpha: float=0.05):
         ts_arr = ts.to_numpy()
 
-        fo_evol = rhis_evol_fixed_start(ts_arr, alpha, self.slice_init, raw=self.raw)
-        ba_evol = rhis_evol_fixed_start(ts_arr[::-1], alpha, self.slice_init, raw=self.raw, ba=True)
+        fo_evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, rhis=self.rhis)
+        ba_evol = rhis_standard_evol(ts_arr[::-1], alpha, self.slice_init, self.stat, rhis=self.rhis, ba=True)
 
-        if self.raw:
+        if self.rhis:
             for hyp, ps in fo_evol.items():
-                self.evol_df_raw[(ts.name, 'fo', hyp)] = ps
+                self.evol_df_rhis[(ts.name, 'fo', hyp)] = ps
             for hyp, ps in ba_evol.items():
-                self.evol_df_raw[(ts.name, 'ba', hyp)] = ps
+                self.evol_df_rhis[(ts.name, 'ba', hyp)] = ps
         else:
             self.evol_df[(ts.name, 'fo')] = fo_evol
             self.evol_df[(ts.name, 'ba')] = ba_evol
 
 
-    def _evol_ts_start_end(
-            self,
-            ts: Series,
-            alpha: float=0.05,
-            ) -> dict[str, list[float | int]]:
+    def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
+        logger.info("Adding representative data...")
 
-        ts_arr = ts.to_numpy()
+        self.direction = direction
 
-        evol = restart_evol_on_rhis_reject(ts_arr, alpha, self.slice_init)
-        # TODO (Marcelo Coelho): ba  # noqa: TD003
-        self.repr_idxs[ts.name] = evol[0]
-        p_evol = evol[1]
-
-        self.evol_df[(ts.name, 'fo')] = p_evol
-        self.evol_df[(ts.name, 'ba')] = np.nan
-
-        return
-
-
-    def build_start_end_evol_repr_df(self,):
-        logger.info("Building representative dataframe from start_end_evol RHIS evolution...")
-        raise_start_end_evol_not_performed(start_end_evol=self.start_end_evol)
-
-        orig_cols = self.orig_df.columns
-        repr_cols = []
-        for orig_col in orig_cols:
-            repr_cols.extend([(orig_col, f"{idx[0]}_{idx[1]}") for idx in self.repr_idxs[orig_col]])
-
-        repr_df_cols = pd.MultiIndex.from_tuples(repr_cols)
-        self.repr_df = pd.DataFrame(columns=repr_df_cols, index=self.orig_df.index)
-
-        for col, idx in repr_cols:
-            idxs = idx.split('_')
-            start = int(idxs[0])
-            end = int(idxs[1])
-            self.repr_df[(col, idx)] = self.orig_df.loc[start: end, col].reindex(self.repr_df.index)
-
-        logger.info("Representative dataframe complete.")
-
-        return self.repr_df
-
-
-    def add_repr_cols_to_df(self,) -> DataFrame:
-        logger.info("Adding new columns to the original dataframe with representative slices - FLEX START mode...")
         if self.evol_df is None:
-            self.evol()
+            self.evol(stat=self.stat)
 
         orig_cols = self.orig_df.columns
 
@@ -198,24 +156,38 @@ class RHIS:
 
             evol_bafo = {}
 
-            for direct in self.directions:
+            for direct in ('ba', 'fo'):
                 evol_bafo[direct] = filtered_evol_df[(orig_col, direct)].to_numpy()
 
-            cut_idxs = cut_idx_for_representative(evol_bafo['ba'], self.alpha, self.slice_init)
-            insert_repr_in_df_from_idx(self, cut_idxs, orig_col)
+            cut_idxs = repr_slice_idxs(evol_bafo[direction], self.alpha, self.slice_init, self.direction)
+            insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
 
-            self.repr_df = True
+            self.repr_on = True
 
-        logger.info("Representative slices successfully included in original dataframe.")
+        logger.info("Representative data successfully added to the dataframe.")
 
         return self.orig_df
 
 
-    def plot(self,*, ba: bool=True, fo: bool=True, use_raw: bool=False):
-        if self.start_end_evol:
-            plot_start_end_evol(self)
-        else:
-            plot_standard_evol(self, ba=ba, fo=fo, use_raw=use_raw)
+    def plot(self,*, rhis: bool=False, show_repr: bool=True):
+        cols = set()
+        for col, _ in self.evol_df.columns:
+            cols.add(col)
+
+        for col in cols:
+            if rhis:
+                rhis_ax = plot_rhis_evol(
+                    col,
+                    self.evol_df_rhis,
+                    self.direction,
+                    )
+                data_ax = plot_data(rhis_ax, col, self.orig_df, show_repr=show_repr)
+                finalize_plot(rhis_ax, data_ax, col, self.direction)
+
+            stat_ax = plot_rhis_stats_evol(col, self.evol_df, self.direction)
+            data_ax1 = plot_data(stat_ax, col, self.orig_df, show_repr=show_repr)
+            finalize_plot(stat_ax, data_ax1, col, self.direction)
+
 
 if __name__ == '__main__':
 
@@ -247,10 +219,10 @@ if __name__ == '__main__':
     # df = pd.DataFrame({'data': ts})
 
     rhis = RHIS(df)
-    evol_df = rhis.evol(raw=False)
+    evol_df = rhis.evol(stat='min', rhis=False)
     # print(evol_df)
     # print(rhis.orig_df)
     # rhis_repr_df = rhis.select_repr()
     # rhis.build_start_end_evol_repr_df()
-    rhis.add_repr_cols_to_df()
-    rhis.plot(ba=True, fo=False, use_raw=False)
+    rhis.add_repr_cols_to_df(direction='fo')
+    rhis.plot(rhis=False, show_repr=True)
