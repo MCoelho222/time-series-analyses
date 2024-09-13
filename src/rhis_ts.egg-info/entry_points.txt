@@ -1,0 +1,2 @@
+[console_scripts]
+rhis-ts = rhis_ts:__main__.main

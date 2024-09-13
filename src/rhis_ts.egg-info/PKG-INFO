@@ -1,3 +1,25 @@
+Metadata-Version: 2.1
+Name: rhis_ts
+Version: 1.0.0
+Summary: Methods for representativeness verification in times series analyses
+Author-email: Marcelo Coelho <mcoelho2011@hotmail.com>
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: loguru
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scipy
+Provides-Extra: dev
+Requires-Dist: covdefaults; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+
 # Time Series Representativeness (RHIS)
 
 This repository presents 4 methods that can be simultaneously applied in time series for variability patterns detection. Essentially, these methods check if the time series are compliant with the basic assumptions for statistical representativeness, i. e., the application of statistical methods for frequency analysis depends on the compliance with the hypotheses of randomness, homogeneity, independence, and stationarity (RHIS). If at least one of these hypotheses is rejected, it means that there is high chance for the presence of a variability pattern, such as trend, shift, and/or seasonality. In this situation, statistical methods likely will not produce representative results. In order to get representativeness, a period of data should be selected, which actually represents the current conditions and can possibly be used for planning future periods. 

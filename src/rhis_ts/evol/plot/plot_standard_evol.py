@@ -97,7 +97,7 @@ def plot_data(
     return ax1
 
 
-def finalize_plot(evol_ax: Axes, data_ax: Axes, col_name: str, direction: str):
+def finalize_plot(evol_ax: Axes, data_ax: Axes, col_name: str, direction: str, savefig_path: str | None=None):
     evol_ax.axhline(y=0.05, color='r', linestyle='--', alpha=0.4)
     evol_ax.set_ylabel('p_value')
     evol_ax.set_xlabel('Time')
@@ -109,4 +109,5 @@ def finalize_plot(evol_ax: Axes, data_ax: Axes, col_name: str, direction: str):
     title = f"Representative Selection by RHIS evol ({direction_name})"
     plt.title(title)
     plt.tight_layout()
+    plt.savefig(savefig_path)
     plt.show()
