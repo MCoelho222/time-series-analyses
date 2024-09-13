@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
-    from pandas import DataFrame
 
     from rhis_ts.types.data import TimeSeriesFlex
 
@@ -15,10 +14,9 @@ def raise_ts_diff_lengths(ba: TimeSeriesFlex, fo: TimeSeriesFlex):
         raise ValueError(err_msg)
 
 
-def raise_rhis_evol_not_performed(df: DataFrame,*, rhis: bool):
-    if rhis and df is None:
-        err_msg = "No evol process ran in 'rhis' mode, rhis should be False."
-        raise ValueError(err_msg)
+def raise_rhis_evol_not_performed():
+    err_msg = "No evol process ran in 'rhis' mode, rhis should be False."
+    raise ValueError(err_msg)
 
 
 def raise_starts_rejected(is_reject_arr: np.ndarray[bool], direction: str):

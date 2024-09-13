@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-import numpy as np
 import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
+from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
 from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
-from rhis_ts.evol.methods.repr_slice import cut_idx_for_representative
-from rhis_ts.evol.plot.standard_evol_plot import plot_standard_evol
-from rhis_ts.evol.plot.start_end_evol_plot import plot_start_end_evol
+from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol, plot_rhis_stats_evol
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -23,8 +21,8 @@ class RHIS:
     def __init__(self, df):
         self.rhis = None
         self.stat = None
-        # self.directions = ('ba', 'fo')
         self.alpha = 0.05
+        self.direction = None
 
         self.orig_df = df
         self.evol_df = None
@@ -142,8 +140,10 @@ class RHIS:
             self.evol_df[(ts.name, 'ba')] = ba_evol
 
 
-    def add_repr_cols_to_df(self,) -> DataFrame:
+    def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
         logger.info("Adding representative data...")
+
+        self.direction = direction
 
         if self.evol_df is None:
             self.evol(stat=self.stat)
@@ -159,7 +159,7 @@ class RHIS:
             for direct in ('ba', 'fo'):
                 evol_bafo[direct] = filtered_evol_df[(orig_col, direct)].to_numpy()
 
-            cut_idxs = cut_idx_for_representative(evol_bafo['ba'], self.alpha, self.slice_init)
+            cut_idxs = repr_slice_idxs(evol_bafo[direction], self.alpha, self.slice_init, self.direction)
             insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
 
             self.repr_on = True
@@ -169,15 +169,25 @@ class RHIS:
         return self.orig_df
 
 
-    def plot(self,*, ba: bool=True, fo: bool=True, rhis: bool=False, show_repr: bool=True):
-        plot_standard_evol(
-            self.orig_df,
-            self.evol_df,
-            self.evol_df_rhis,
-            ba=ba,
-            fo=fo,
-            rhis=rhis,
-            show_repr=show_repr)
+    def plot(self,*, rhis: bool=False, show_repr: bool=True):
+        cols = set()
+        for col, _ in self.evol_df.columns:
+            cols.add(col)
+
+        for col in cols:
+            if rhis:
+                rhis_ax = plot_rhis_evol(
+                    col,
+                    self.evol_df_rhis,
+                    self.direction,
+                    )
+                data_ax = plot_data(rhis_ax, col, self.orig_df, show_repr=show_repr)
+                finalize_plot(rhis_ax, data_ax, col, self.direction)
+
+            stat_ax = plot_rhis_stats_evol(col, self.evol_df, self.direction)
+            data_ax1 = plot_data(stat_ax, col, self.orig_df, show_repr=show_repr)
+            finalize_plot(stat_ax, data_ax1, col, self.direction)
+
 
 if __name__ == '__main__':
 
@@ -209,10 +219,10 @@ if __name__ == '__main__':
     # df = pd.DataFrame({'data': ts})
 
     rhis = RHIS(df)
-    evol_df = rhis.evol(stat='min', rhis=True)
+    evol_df = rhis.evol(stat='min', rhis=False)
     # print(evol_df)
     # print(rhis.orig_df)
     # rhis_repr_df = rhis.select_repr()
     # rhis.build_start_end_evol_repr_df()
-    rhis.add_repr_cols_to_df()
-    rhis.plot(ba=True, fo=False, rhis=True, show_repr=True)
+    rhis.add_repr_cols_to_df(direction='fo')
+    rhis.plot(rhis=False, show_repr=True)

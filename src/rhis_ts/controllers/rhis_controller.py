@@ -46,8 +46,6 @@ def insert_repr_in_df_from_idx(df: DataFrame, idx: tuple, df_col: str):
 
     df.loc[:, df_col + '_repr'] = full_ts
 
-    return df
-
 
 def build_init_evol_df(orig_colnames: list[str], index: Index,*, rhis: bool) -> DataFrame:
     cols_tuples = []
