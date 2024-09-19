@@ -7,7 +7,6 @@ import numpy as np
 from rhis_ts.errors.exceptions import handle_exc_msg
 
 if TYPE_CHECKING:
-    from pandas import DatetimeIndex
 
     from rhis_ts.types.data import TimeSeriesFlex
 
@@ -67,24 +66,3 @@ def slices_to_evol(ts: TimeSeriesFlex, init: int) -> list[list[int | float]]:
     except TypeError as exc:
         return handle_exc_msg(exc, "The parameter ts should be a list or numpy.ndarray, and the init should be an integer")
 
-
-def calc_time_rng_of_slices(df_index: DatetimeIndex, slice_init: int):
-    rng_start = df_index[0]
-    rng_end = df_index[-1]
-    total_delta = rng_end - rng_start
-    t_rngs_ba = []
-    t_rngs_fo = []
-
-    for i in range(slice_init - 1, len(df_index)):
-        t_delta = df_index[i] - rng_start
-        t_delta_perc = t_delta.days / total_delta.days
-        t_rngs_fo.append(round(t_delta_perc, 4))
-
-        t_delta = rng_end - df_index[- (i + 1)]
-        t_delta_perc = t_delta.days / total_delta.days
-        t_rngs_ba.append(round(t_delta_perc, 4))
-
-    return {
-        'ba_t_rngs': t_rngs_ba[::-1],
-        'fo_t_rngs': t_rngs_fo,
-    }

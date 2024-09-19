@@ -4,12 +4,9 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 
-from rhis_ts.evol.errors.exceptions import raise_rhis_evol_not_performed
-
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
-
 
 def plot_rhis_evol(
         col: str,
@@ -25,7 +22,8 @@ def plot_rhis_evol(
             if direction == 'fo':
                 ax = evol_df_rhis[(col, 'fo', hypos[i])].plot(color=colors[i], alpha=0.3, linestyle='-', linewidth=2)
     else:
-        raise_rhis_evol_not_performed()
+        err_msg = "No evol process ran in 'rhis' mode, rhis should be False."
+        raise ValueError(err_msg)
 
     return ax
 
@@ -98,16 +96,22 @@ def plot_data(
 
 
 def finalize_plot(evol_ax: Axes, data_ax: Axes, col_name: str, direction: str, savefig_path: str | None=None):
-    evol_ax.axhline(y=0.05, color='r', linestyle='--', alpha=0.4)
+    evol_ax.axhline(y=0.05, color='r', linestyle='--', alpha=0.4, label='alpha=0.05')
     evol_ax.set_ylabel('p_value')
     evol_ax.set_xlabel('Time')
     data_ax.set_ylabel(col_name)
+
     lines1, labels1 = evol_ax.get_legend_handles_labels()
     lines2, labels2 = data_ax.get_legend_handles_labels()
+
     data_ax.legend(lines1 + lines2, labels1 + labels2)
+
     direction_name = 'Backwards' if direction == 'ba' else 'Forwards'
+
     title = f"Representative Selection by RHIS evol ({direction_name})"
+
     plt.title(title)
     plt.tight_layout()
-    plt.savefig(savefig_path)
+    if savefig_path is not None:
+        plt.savefig(savefig_path)
     plt.show()
