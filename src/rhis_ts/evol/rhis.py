@@ -6,7 +6,7 @@ import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
-from rhis_ts.controllers.rhis_controller import build_init_evol_df, insert_repr_in_df_from_idx
+from rhis_ts.controllers.rhis_controller import RhisController
 from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
 from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
 from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol, plot_rhis_stats_evol
@@ -16,76 +16,47 @@ if TYPE_CHECKING:
     from pandas import Series
 
 
-class RHIS:
+class Rhis:
 
     def __init__(self, df):
+        self.alpha = 0.05
         self.rhis = None
         self.stat = None
-        self.alpha = 0.05
         self.direction = None
-
         self.orig_df = df
         self.evol_df = None
         self.evol_df_rhis = None
-        self.len_df = len(self.orig_df)
-
-        self.slice_init = slice_init(self.len_df)
-
-        self.repr_idxs = {}
-        self.repr_on = False
-
-        self.start_end_evol = False
+        self.slice_init = slice_init(len(self.orig_df))
 
 
     def evol(self,
             cols: Iterable[str]|None=None,
-            stat: str | None='min',
+            stat: str='min',
             alpha: float=0.05,*,
             rhis: bool=False
-            ) -> dict[str, list[float|int]]:
+            ) -> DataFrame:
         """
-        Calculate randomness, homogeneity, independence and stationarity (rhis)
-        p-values for time series slices.
-
-        The main purpose is to calculate rhis p-values for slices with increasing
-        or decreasing length. The p-values of the different lengths will indicate
-        where or with how much elements (from beginning to end or end to beginning)
-        the series is no longer representative, due to the presence of some
-        variability pattern, e.g., trends or seasonality.
-
-        The first or last slice must have at least 5 elements to the tests to be
-        performed.
-
-        Example
-        -------
-            Slices with increasing length
-
-                ts = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                slices = [ts[:5], ts[:6], ts[:7], ts[:8], ts[:9], ts]
-
-            Slices with decreasing length
-
-                ts = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                slices = [ts, ts[:9], ts[:8], ts[:7], ts[:6], ts[:5]]
+        Generate a dataframe (self.evol_df or self.evol_df_rhis) with the series from
+        the evolutional application of the randomness, homogeneity, independence and
+        stationarity (rhis) tests to the time series in the original dataframe
+        (self.orig_df).
 
         Parameters
         ----------
-            slices
-                A list with slices from another list with float or integers.
+            cols
+                An Iterable with string representing the columns' names to be analyzed.
+            stat
+                One of ['min', 'med', 'max', None]. The statistic to be applied to the rhis
+                evolution. For example, if 'min', the minimum p-value among the rhis p-values
+                is used, and self.evol_df is created.
+            alpha
+                The significance level.
+            rhis
+                If True, the pure rhis evolution is performed and self.evol_df_rhis is created.
 
         Return
         ------
-            A dictionary with rhis p-values
-
-            Example:
-
-                evol = {
-                    'r': [0.556, 0.265, 0.945, 0.159],
-                    'h': [0.112, 0.232, 0.284, 0.492],
-                    'i': [0.253, 0.022, 0.248, 0.995],
-                    's': [0.534, 0.003, 0.354, 0.009],
-                }
-
+            DataFrame with p-values evolution
         """
         mode = 'RHIS' if rhis else 'STAT'
         msg = f"Processing RHIS evol in {mode.upper()} mode..."
@@ -93,10 +64,8 @@ class RHIS:
         self.alpha = alpha
         self.rhis = rhis
         self.stat = stat
-
         try:
-            init_df = build_init_evol_df(self.orig_df.columns, self.orig_df.index, rhis=self.rhis)
-
+            init_df = RhisController.build_init_evol_df(self.orig_df.columns, self.orig_df.index, rhis=self.rhis)
             if rhis:
                 self.evol_df_rhis = init_df
             else:
@@ -104,32 +73,25 @@ class RHIS:
         except AttributeError:
             msg = "The parameter df should be an instance of pandas.DataFrame."
             logger.exception(msg)
-
         try:
             evol_cols = cols if cols is not None else self.orig_df.columns
             for col in evol_cols:
                 ts = self.orig_df[col]
                 self._ts_evol(ts, alpha)
-
             evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_rhis[evol_cols]
-
         except (ValueError, KeyError):
             msg = "Evol process could not be complete."
             logger.exception(msg)
 
             return
-
         logger.info("RHIS evol successfully complete.")
-
         return evol_df
 
 
     def _ts_evol(self, ts: Series, alpha: float=0.05):
         ts_arr = ts.to_numpy()
-
         fo_evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, rhis=self.rhis)
         ba_evol = rhis_standard_evol(ts_arr[::-1], alpha, self.slice_init, self.stat, rhis=self.rhis, ba=True)
-
         if self.rhis:
             for hyp, ps in fo_evol.items():
                 self.evol_df_rhis[(ts.name, 'fo', hyp)] = ps
@@ -141,35 +103,27 @@ class RHIS:
 
 
     def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
-        logger.info("Adding representative data...")
+        logger.info("Adding representative data to the original dataframe...")
 
         self.direction = direction
-
         if self.evol_df is None:
             self.evol(stat=self.stat)
 
         orig_cols = self.orig_df.columns
-
         for orig_col in orig_cols:
             evol_df_cols = self.evol_df.columns
             filtered_evol_df = self.evol_df[[col for col in evol_df_cols if col[0] == orig_col]]
-
             evol_bafo = {}
-
             for direct in ('ba', 'fo'):
                 evol_bafo[direct] = filtered_evol_df[(orig_col, direct)].to_numpy()
-
             cut_idxs = repr_slice_idxs(evol_bafo[direction], self.alpha, self.slice_init, self.direction)
-            insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
+            RhisController.insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
 
-            self.repr_on = True
-
-        logger.info("Representative data successfully added to the dataframe.")
-
+        logger.info("Representative data successfully added.")
         return self.orig_df
 
 
-    def plot(self, savefig_path: str,*, rhis: bool=False, show_repr: bool=True):
+    def plot(self, savefig_path: str | None=None,*, rhis: bool=False, show_repr: bool=True):
         cols = set()
         for col, _ in self.evol_df.columns:
             cols.add(col)
@@ -218,7 +172,7 @@ if __name__ == '__main__':
 
     # df = pd.DataFrame({'data': ts})
 
-    rhis = RHIS(df)
+    rhis = Rhis(df)
     evol_df = rhis.evol(stat='min', rhis=False)
     # print(evol_df)
     # print(rhis.orig_df)

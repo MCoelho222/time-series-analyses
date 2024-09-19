@@ -8,19 +8,7 @@ import numpy as np
 if TYPE_CHECKING:
     from rhis_ts.types.data import TimeSeriesFlex
 
-
-def ends_rejected_both_directions(ba: TimeSeriesFlex, fo: TimeSeriesFlex, alpha) -> bool:
-    return ba[0] > alpha or fo[-1] > alpha
-
-
-def starts_rejected(alpha: float, ps: TimeSeriesFlex, direction: str) -> bool:
-    if direction == 'ba':
-        return ps[-1] <= alpha
-    else:
-        return ps[0] <= alpha
-
-
-def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str, sli_init: int):
+def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str, sli_init: int) -> int:
     data = ps[:]
     if direction == 'fo':
         data = ps[::-1]
