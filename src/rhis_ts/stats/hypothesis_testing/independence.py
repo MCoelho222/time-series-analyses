@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hyp_test_args('wald-wolfowitz')
+@check_hypothesis_test_args('wald-wolfowitz')
 def wald_wolfowitz(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,*,
@@ -22,39 +22,32 @@ def wald_wolfowitz(
         ties: bool = True,
         ) -> TestResults:
     """
-    ---------------------------------------------------------------------------
     Wald & Wolfowitz test for serial correlation.
 
     Test the hypothesis that x1, ..., xN are independent observations from the
     same population.
 
     References
-    ----------
         Wald A. and Wolfowitz J. (1943). An exact test for randomness in the
         non-parametric case based on serial correlation.
-    ---------------------------------------------------------------------------
+
     Parameters
     ----------
         ts
             A time series to be tested.
-
         alpha
             The significance level for the test. Default is 0.05.
-
         on_ranks
             If True, the test will be applied on the ranks.
-
         ties
             If True and on_ranks is True, the ranks will be corrected for ties.
-    ---------------------------------------------------------------------------
+
     Return
     ------
         A namedtuple
             ('Wald_Wolfowitz', ['statistic', 'p_value', 'reject'])
-
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
-    ---------------------------------------------------------------------------
     """
     Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
     arr = np.array(ts)
@@ -95,7 +88,6 @@ def wald_wolfowitz(
     reject = p < alpha
 
     return Results(r, round(p, 4), reject)
-
 
 if __name__ == "__main__":
     from rhis_ts.utils.data import slices_to_evol

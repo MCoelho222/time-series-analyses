@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from rhis_ts.stats.hypo.mann_kendall import mann_kendall
-from rhis_ts.stats.hypo.mann_whitney import mann_whitney
-from rhis_ts.stats.hypo.runs import wallismoore
-from rhis_ts.stats.hypo.wald_wolfowitz import wald_wolfowitz
+from rhis_ts.stats.hypothesis_testing.homogeneity import mann_whitney
+from rhis_ts.stats.hypothesis_testing.independence import wald_wolfowitz
+from rhis_ts.stats.hypothesis_testing.randomness import wallismoore
+from rhis_ts.stats.hypothesis_testing.stationarity import mann_kendall
 
 
 def calculate_rhis(ts: np.ndarray, alpha: float, *, min: bool=True) -> int | dict[float]:

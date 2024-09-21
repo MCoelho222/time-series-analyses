@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 from rhis_ts.utils.data import break_list_in_equal_parts
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hyp_test_args('mann-whitney')
+@check_hypothesis_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
         alpha: float=0.05,
@@ -25,7 +25,6 @@ def mann_whitney(  # noqa: PLR0913
         ties: bool=True,
         ) -> TestResults:
     """
-    ----------------------------------------------------------------------
     Compare two independent groups of data using the Mann-Whitney U test.
 
     This implementation applies the large sample approximation (applicable
@@ -42,51 +41,44 @@ def mann_whitney(  # noqa: PLR0913
         - The underlying distributions from which the samples are derived
           are identical in shape.
 
-    Null and Alternative hypo
+    Null and Alternative hypotheses
 
         H0: prob[x > y] = 0.5
 
         H1: prob[ x > y] != 0.5 (two-sided)
         H2: prob[ x > y] > 0.5 (greater)
         H3: prob[ x > y] < 0.5 (less)
-    ----------------------------------------------------------------------
+
     References
     ----------
         HELSEL & HIRSCH (2002). Techniques of Water Resources
         investigations fo the United States Geological Survey.Chapter 5 -
         Statistical Methods in Water Resources.
         Source: https://pubs.usgs.gov/twri/twri4a3/twri4a3.pdf
-    ----------------------------------------------------------------------
+
     Parameters
     ----------
         x
             A list of floats or integers.
-
         y
             A list of floats or integers.
-
         alternative
             two-sided: x != y
             greater: x > y
             less: x < y
-
         alpha
             The significance level (0.05 by default).
-
         continuity
             If True, applies correction for continuity.
-
         ties
             If True, applies correction for ties.
-    ----------------------------------------------------------------------
+
     Returns
     -------
         A namedtuple
             ('MannWhitney', ['statistic', 'p_value', 'reject'])
-
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
-    ----------------------------------------------------------------------
     """
     Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if y is None:
@@ -106,7 +98,6 @@ def mann_whitney(  # noqa: PLR0913
 
     n = len(gs_concat)
     ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [i + 1 for i in range(n)]
-
     ranks_dict = dict(zip(gs_sorted, ranks))
     g1_ranks = [ ranks_dict[value] for value in g1 ]
     g2_ranks = [ ranks_dict[value] for value in g2 ]
@@ -142,7 +133,6 @@ def mann_whitney(  # noqa: PLR0913
         reject = rank_sum1 < rank_sum2 and p < alpha
     if alternative == 'greater':
         reject = rank_sum1 > rank_sum2 and p < alpha
-
 
     return Results(stat, round(p, 4), reject, alternative)
 

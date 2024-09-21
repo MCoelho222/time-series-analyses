@@ -11,21 +11,18 @@ if TYPE_CHECKING:
 
 def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
     """
-    --------------------------------------------------------------------
     Check if there equal numbers in sequence and get their ranks.
-    --------------------------------------------------------------------
+
     Parameters
     ----------
         ts
             A list of integers or floats.
-
         start
             The index from where the verification should start checking.
-    --------------------------------------------------------------------
+
     Returns
     -------
         A list with ranks where ties are present.
-    --------------------------------------------------------------------
     """
     n = len(ts)
     ts_sorted = np.sort(ts)
@@ -44,27 +41,24 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
 
     return tie_ranks
 
-
 def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
       -> list[int | float] | dict[str, str | int]:  # noqa: C901
     """
-    -----------------------------------------------------------------
     Apply correction for ties.
-    -----------------------------------------------------------------
+
     Parameters
     ----------
         ts
             A list of integers or floats.
 
         ties_data
-            If True, information about ties will be returned
-    -----------------------------------------------------------------
+            If True, information about ties will be returned.
+
     Returns
     -------
         A list with ranks corrected for ties, or a dictionary with
         information about ties, including the list with ranks. The
         ranks will be in the original time series order.
-    -----------------------------------------------------------------
     """
     ranks = np.array(to_ranks(ts), dtype=float)
 
@@ -106,24 +100,20 @@ def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
         }
 
         return ties_data
-
     return ranks
-
 
 def to_ranks(ts: TimeSeriesFlex) -> TimeSeriesFlex:
     """
-    ----------------------------------------------------------
     Transform the original series in a series of ranks.
-    ----------------------------------------------------------
+
     Parameters
     ----------
         ts
             A list or array with numbers.
-    ----------------------------------------------------------
+
     Return
     ------
         A list with the original data replaced by their ranks.
-    ----------------------------------------------------------
     """
     ts_unique = np.unique(ts)
     ts_sorted = np.sort(ts)

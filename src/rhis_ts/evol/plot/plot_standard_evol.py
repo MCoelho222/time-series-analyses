@@ -100,6 +100,7 @@ def finalize_plot(evol_ax: Axes, data_ax: Axes, col_name: str, direction: str, s
     evol_ax.set_ylabel('p_value')
     evol_ax.set_xlabel('Time')
     data_ax.set_ylabel(col_name)
+    evol_ax.set_ylim(0, 1)
 
     lines1, labels1 = evol_ax.get_legend_handles_labels()
     lines2, labels2 = data_ax.get_legend_handles_labels()
