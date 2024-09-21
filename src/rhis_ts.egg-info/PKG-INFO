@@ -11,6 +11,8 @@ Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+Requires-Dist: setuptools
+Requires-Dist: bokeh
 Requires-Dist: loguru
 Requires-Dist: matplotlib
 Requires-Dist: numpy
@@ -20,7 +22,7 @@ Provides-Extra: dev
 Requires-Dist: covdefaults; extra == "dev"
 Requires-Dist: pytest; extra == "dev"
 
-# Time Series Representativeness (RHIS)
+# Overview
 
 This repository presents 4 methods that can be simultaneously applied in time series for variability patterns detection. Essentially, these methods check if the time series are compliant with the basic assumptions for statistical representativeness, i. e., the application of statistical methods for frequency analysis depends on the compliance with the hypotheses of randomness, homogeneity, independence, and stationarity (RHIS). If at least one of these hypotheses is rejected, it means that there is high chance for the presence of a variability pattern, such as trend, shift, and/or seasonality. In this situation, statistical methods likely will not produce representative results. In order to get representativeness, a period of data should be selected, which actually represents the current conditions and can possibly be used for planning future periods. 
 
@@ -87,35 +89,10 @@ rhis-ts
 
 # Example
 
-The **RHIS** tests were applied to increasing slices from a time series.
-
-For example:
-
-```py
-ts = [22, 10, 30, 4, 25, 12, 7]
-
-slices = [[22, 10, 30, 4, 25], [22, 10, 30, 4, 25, 12], [22, 10, 30, 4, 25, 12, 7]]
-```
-
-The result is similar to this:
-
-```py
-evol_rhis = {
-        'randomness': [0.234, 0.321, 0.001],
-        'homogeneity': [0.532, 0.731, 0.091],
-        'independence': [0.444, 0.624, 0.656],
-        'stationarity': [0.121, 0.000, 0.001],
-    }
-```
-
-In this way, the first p-values are the result from the application of the **RHIS** tests in the first 5 values, and the last p-values are the result from the entire time series.
-    
-In the example below, the time series has an upward shift after the 80th value. Clearly something has changed in the process that generates these data. In this situation, the estimation of statistical parameters with the whole data would not be reasonable, since two different populations might be present. The boxplot evolution shows that the median, the 25th, 75th and higher percentiles are increasing from the 80th value, changing the whole population distribution over time.
-
-The last graph, which shows the evolution of the **RHIS** results, confirms that indeed, the statictical characteristics of the population has changed after the 80th value. The homogeneity, independence and stationarity hypotheses were rejected right after this point. The p-values go to 0. Despite randomness was not rejected, it had a significant decrease. Anyway, the rejection of just one of these 4 hypotheses is enough to conclude that the time series is no longer representative of only one population after this point.
-
-With that in mind, one should decide which part of the time series to use to calculate statistical parameters or make any inference analysis. It will depend on each ones objectives.
-
 ## Respresentative Selection Using RHIS Evol
+
+In this example, the RHIS evolution was used to select a representative slice of the original time series. The selected slice is compliant with the hypotheses of randomness, homogeneity, independence, and stationarity. The selected slice is appropriate for using in statistical methods, such as mean, standard deviation, and others.
+
+The dashed grey line represents the forward evolution of the minimum value among the four p-values from RHIS. The first value is the result from the application of the **RHIS** tests on the first 5 values and taken the minimum, and the last one is the result from the application on the entire time series.
 
 ![RHISEvolution](src/rhis_ts/examples/rhis_evol.png)

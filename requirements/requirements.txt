@@ -1,3 +1,5 @@
+setuptools
+bokeh
 loguru
 matplotlib
 numpy

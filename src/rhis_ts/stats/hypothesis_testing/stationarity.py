@@ -6,24 +6,23 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hyp_test_args('mann-kendall')
+@check_hypothesis_test_args('mann-kendall')
 def mann_kendall(
         ts: list[int|float] | np.ndarray[int|float],
         alpha: float=0.05,
         alternative: str = 'two-sided',
     ) -> TestResults:
     """
-    ---------------------------------------------------------------------------
     Apply the Mann-Kendall test using the normal approximation,
     which is valid for series with 10 or more elements (GILBERT, 1987).
-    ---------------------------------------------------------------------------
+
     References
     ----------
         GILBERT, R. O. (1987). Statistical Methods for Environmental Pollution
@@ -32,27 +31,24 @@ def mann_kendall(
         HELSEL & HIRSCH (2002). Techniques of Water Resources investigations of
         the United States Geological Survey. Chapter 3 - Statistical Methods in
         Water Resources.
-    ---------------------------------------------------------------------------
+
     Parameters
     ----------
         ts
             A time series to be tested.
 
         alternative
-            One of the alternative hypo: 'two-sided', 'greater',
-            or 'less'.
+            'two-sided', 'greater', or 'less'.
 
         alpha
             The significance level for the test. Default is 0.05.
-    ---------------------------------------------------------------------------
+
     Return
     ------
         namedtuple
             ('Mann_Kendall', ['statistic', 'p_value', 'reject'])
 
-            The parameter 'reject' is of type bool. 'True' means the null
-            hypothesis was reject.
-    ---------------------------------------------------------------------------
+            'reject' is boolean. If True, the null hypothesis was reject.
     """
     Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     n = len(ts)
@@ -75,13 +71,10 @@ def mann_kendall(
     sigma = ((1 / 18) * ((n * (n - 1.) * (2. * n + 5.)) - ties_factor)) ** 0.5
 
     condition_value = 0.
-
     if test_s > condition_value:
         z = abs((test_s - 1.)/sigma)
-
     if test_s == condition_value:
         z = condition_value
-
     if test_s < condition_value:
         z = abs((test_s + 1.)/sigma)
 
@@ -90,13 +83,10 @@ def mann_kendall(
     if alternative == 'two-sided':
         p = p * 2
         reject = p < alpha
-
     if alternative == 'less':
         reject = test_s < condition_value and p < alpha
-
     if alternative == 'greater':
         reject = test_s > condition_value and p < alpha
-
 
     return Results(test_s, round(p, 4), reject, alternative)
 

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.stats.hypo.errors.decorators import check_hyp_test_args
+from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hyp_test_args('runs_test')
+@check_hypothesis_test_args('runs')
 def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
         alpha: float=0.05,
@@ -21,12 +21,10 @@ def runs_test(  # noqa: C901
         continuity: bool=True
         ) -> TestResults:
     """
-    ---------------------------------------------------------------------------------
     Apply the Single-Sample Runs Test in on a time series. Uses the median as a
     criteria for defining runs (up or down).
 
-    hypo
-    ----------
+    hypotheses
 
         Null hypothesis
             H0: The events in the underlying population represented by the sample
@@ -41,37 +39,33 @@ def runs_test(  # noqa: C901
                 the sample series are distributed non-randomly due to too many runs.
 
     References
-    ---------
+
         SHESKIN (2004). Handbook of Parametric and Nonparametric Statistical
         Procedures - Test 10. 3rd edition.
-    ----------------------------------------------------------------------------------
+
     Parameters
     ----------
         ts
             The time series (1D list or numpy ndarray).
-
         alternative
             One of the alternative hypo:
                 two-sided
                 greater
                 less
-
         alpha
             The significance level for the test.
-
         continuity
             If True, applies the correction for continuity for the normal
             approximation.
-    ----------------------------------------------------------------------------------
+
     Return
     ------
         A namedtuple
             ('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])
-
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
-    ----------------------------------------------------------------------------------
     """
+    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     ts = np.array(ts) if isinstance(ts, list) else ts
 
     median = np.median(np.array(ts))
@@ -86,11 +80,9 @@ def runs_test(  # noqa: C901
         if element < median:
             signs.append(-1)
 
-    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if not signs:
         reject = True
         return Results(0, 0.0, reject, alternative)
-
 
     for i in range(1, len(signs)):
         el = signs[i]
@@ -129,43 +121,37 @@ def runs_test(  # noqa: C901
     decision = test_decision_normal(stat, stat_mean, z, alternative, alpha)
     return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
 
-
-@check_hyp_test_args('wallis-moore')
+@check_hypothesis_test_args('wallis-moore')
 def wallismoore(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,
         alternative: str = 'two-sided',
     ) -> TestResults:
     """
-    ---------------------------------------------------------------------------------
     Applies the Wallis and Moore (1941) runtest for randomness.
 
     Reference
     ---------
         SHESKIN (2004). Handbook of Parametric and Nonparametric Statistical
         Procedures - Test 10. 3rd edition.
-    ---------------------------------------------------------------------------------
+
     Parameters
     ----------
         ts
             1D list or numpy array.
-
         interval
             1D list or tuple with length 2. The first object is the index referent
             to the sample number to start the time series. The second number is last
             sample number.
-
         alpha
             The significance level for the test.
-    ---------------------------------------------------------------------------------
+
     Return
     -------
         A namedtuple
             ('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])
-
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
-    ---------------------------------------------------------------------------------
     """
     Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     ts_arr = np.array(ts)
@@ -237,5 +223,4 @@ if __name__ == "__main__":
     data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
     tss = slices_to_evol(data)
     for ts in tss:
-        # print(runs_test(ts).p_value)
         print(wallismoore(ts).p_value)

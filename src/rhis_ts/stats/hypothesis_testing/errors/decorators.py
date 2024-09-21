@@ -2,22 +2,22 @@ from __future__ import annotations
 
 from functools import wraps
 
-from rhis_ts.stats.hypo.errors.exc import (
-    raise_if_alpha_not_valid,
+from rhis_ts.stats.hypothesis_testing.errors.raises import (
+    raise_if_alpha_invalid,
+    raise_if_alternative_invalid,
     raise_if_not_bool,
     raise_if_not_list_or_array_of_nums,
-    raise_if_not_valid_alternative,
 )
 
 
-def check_hyp_test_args(test: str):
+def check_hypothesis_test_args(test: str):
     def check_args(func):
         @wraps(func)
         def _check_args(*args, **kwargs):
             arg_raises = {
                 0: raise_if_not_list_or_array_of_nums,
-                1: raise_if_alpha_not_valid,
-                2: raise_if_not_valid_alternative,
+                1: raise_if_alpha_invalid,
+                2: raise_if_alternative_invalid,
             }
 
             arg_raises_by_test = {
@@ -35,9 +35,7 @@ def check_hyp_test_args(test: str):
                     raise_if_not_bool(arg, kw)
 
             return func(*args, **kwargs)
-
         return _check_args
-
     return check_args
 
 
