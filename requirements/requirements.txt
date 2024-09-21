@@ -1,3 +1,4 @@
+setuptools
 bokeh
 loguru
 matplotlib

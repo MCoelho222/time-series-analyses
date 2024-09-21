@@ -47,16 +47,13 @@ def runs_test(  # noqa: C901
     ----------
         ts
             The time series (1D list or numpy ndarray).
-
         alternative
             One of the alternative hypo:
                 two-sided
                 greater
                 less
-
         alpha
             The significance level for the test.
-
         continuity
             If True, applies the correction for continuity for the normal
             approximation.
@@ -142,12 +139,10 @@ def wallismoore(
     ----------
         ts
             1D list or numpy array.
-
         interval
             1D list or tuple with length 2. The first object is the index referent
             to the sample number to start the time series. The second number is last
             sample number.
-
         alpha
             The significance level for the test.
 

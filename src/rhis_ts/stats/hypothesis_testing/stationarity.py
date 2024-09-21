@@ -88,6 +88,5 @@ def mann_kendall(
     if alternative == 'greater':
         reject = test_s > condition_value and p < alpha
 
-
     return Results(test_s, round(p, 4), reject, alternative)
 
