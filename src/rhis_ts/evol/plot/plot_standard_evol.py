@@ -13,7 +13,8 @@ def plot_rhis_evol(  # noqa: PLR0913
         evol_df: DataFrame,
         evol_df_rhis: DataFrame,
         direction: str,
-        xlabel: str|None,
+        figsize: tuple[int]|None=None,
+        xlabel: str|None=None,
         rhis_params: dict[str|int]|None=None,
         rhis_stat_params: dict[str|int]|None=None,*,
         rhis: bool=False,
@@ -23,26 +24,25 @@ def plot_rhis_evol(  # noqa: PLR0913
     if rhis_stat_params is None:
         rhis_stat_params = {}
     if rhis:
-        if evol_df_rhis is not None:
-            hypos = ['R', 'H', 'I', 'S']
-            colors_default = {'R': 'm', 'H': 'c', 'I': 'r', 'S': 'b'}
-            for i in range(len(hypos)):
-                ax = evol_df_rhis[(col_name, direction, hypos[i])].plot(
-                    color=rhis_params.get('colors', colors_default)[hypos[i]],
-                    alpha=rhis_params.get('alpha', 0.4),
-                    linestyle=rhis_params.get('linestyle', '-'),
-                    linewidth=rhis_params.get('linewidth', 2))
-        else:
-            err_msg = "To plot the rhis evolution, please first call the method 'evol' with parameter 'rhis'=True."
-            raise ValueError(err_msg)
+        hypos = ['R', 'H', 'I', 'S']
+        colors_default = {'R': 'm', 'H': 'c', 'I': 'r', 'S': 'b'}
+        for i in range(len(hypos)):
+            ax = evol_df_rhis[(col_name, direction, hypos[i])].plot(
+                figsize=figsize,
+                color=rhis_params.get('colors', colors_default)[hypos[i]],
+                alpha=rhis_params.get('alpha', 0.4),
+                linestyle=rhis_params.get('linestyle', '-'),
+                linewidth=rhis_params.get('linewidth', 1))
     else:
         ax = evol_df[(col_name, direction)].plot(
-            color=rhis_stat_params.get('color', 'k'),
-            alpha=rhis_stat_params.get('alpha', 0.7),
+            figsize=figsize,
+            color=rhis_stat_params.get('color', 'b'),
+            alpha=rhis_stat_params.get('alpha', 1),
             linestyle=rhis_stat_params.get('linestyle', '-'),
-            linewidth=rhis_stat_params.get('linewidth', 2))
+            linewidth=rhis_stat_params.get('linewidth', 1))
 
     ax.set_xlabel(xlabel if xlabel is not None else 'Time')
+
     return ax
 
 
@@ -68,8 +68,8 @@ def plot_data(  # noqa: PLR0913
         color=data_params.get('color', 'none'),
         edgecolors=data_params.get('edgecolors', 'k'),
         facecolors=data_params.get('facecolors', 'none'),
-        alpha=data_params.get('alpha', 0.7),
-        s=data_params.get('s', 100))
+        alpha=data_params.get('alpha', 1),
+        s=data_params.get('s', 70))
     if show_repr:
         data_ax.scatter(
             x=orig_df.index,
@@ -79,8 +79,8 @@ def plot_data(  # noqa: PLR0913
             color=repr_params.get('color', 'none'),
             edgecolors=repr_params.get('edgecolors', 'none'),
             facecolors=repr_params.get('facecolors', 'k'),
-            alpha=repr_params.get('alpha', 0.7),
-            s=repr_params.get('s', 100))
+            alpha=repr_params.get('alpha', 1),
+            s=repr_params.get('s', 70))
 
     data_ax.set_ylabel(ylabel if ylabel is not None else col_name)
     return data_ax
@@ -101,6 +101,7 @@ def finalize_plot(  # noqa: PLR0913
         y=alpha,
         color=alpha_line_params.get('color', 'k'),
         linestyle=alpha_line_params.get('linestyle', '--'),
+        linewidth=alpha_line_params.get('linewidth', 0.5),
         alpha=alpha_line_params.get('alpha', 0.4),
         label=label_alpha)
 
@@ -113,7 +114,7 @@ def finalize_plot(  # noqa: PLR0913
     data_ax.legend(lines1 + lines2, labels1 + labels2)
 
     if figtitle:
-        plt.title(figtitle, loc='left')
+        plt.title(figtitle, loc='left', fontsize=11)
     plt.tight_layout()
     if savefig_path is not None:
         plt.savefig(savefig_path)

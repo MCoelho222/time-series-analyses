@@ -7,9 +7,11 @@ from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import RhisController
+from rhis_ts.evol.exc import PlotEvolError
 from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
 from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
 from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
+from rhis_ts.evol.validators import validate_plot_params
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -87,7 +89,6 @@ class Rhis:
         logger.info("RHIS evol successfully complete.")
         return evol_df
 
-
     def _ts_evol(self, ts: Series, alpha: float=0.05):
         ts_arr = ts.to_numpy()
         fo_evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, rhis=self.rhis)
@@ -100,7 +101,6 @@ class Rhis:
         else:
             self.evol_df[(ts.name, 'fo')] = fo_evol
             self.evol_df[(ts.name, 'ba')] = ba_evol
-
 
     def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
         logger.info("Adding representative data to the original dataframe...")
@@ -122,53 +122,63 @@ class Rhis:
         logger.info("Representative data successfully added.")
         return self.orig_df
 
-
+    @validate_plot_params
     def plot(
             self,
             col_name: str|None=None,
-            savefig_path: str | None=None,*,
+            save_dir_path: str | None=None,
+            save_format: str | None='png',*,
             rhis: bool=False,
             show_repr: bool=True,
             **kwargs
             ):
-        if col_name is None:
-            cols = set()
-            for col, _ in self.evol_df.columns:
-                cols.add(col)
-        else:
-            if col_name not in self.orig_df.columns.values:
-                msg = f"{col_name} is not a valid column name."
-                raise ValueError(msg)
+        try:
+            if self.evol_df is None:
+                msg = "Please, before trying to plot, run the evolution process by calling the 'evol' method."
+                raise PlotEvolError(msg)
+
             cols = [col_name,]
 
-        for colname in cols:
-            evol_ax = plot_rhis_evol(
-                colname,
-                self.evol_df,
-                self.evol_df_rhis,
-                self.direction,
-                kwargs.get('xlabel'),
-                kwargs.get('rhis_params'),
-                kwargs.get('rhis_stat_params'),
-                rhis=rhis
-                )
-            data_ax = plot_data(
-                evol_ax,
-                colname,
-                self.orig_df,
-                kwargs.get('ylabel'),
-                kwargs.get('data_params'),
-                kwargs.get('repr_params'),
-                show_repr=show_repr
-                )
-            finalize_plot(
-                evol_ax,
-                data_ax,
-                self.alpha,
-                kwargs.get('figtitle'),
-                kwargs.get('alpha_line_params'),
-                savefig_path
-                )
+            if col_name is None:
+                cols = {col for col, _ in self.evol_df.columns}
+            elif col_name not in self.orig_df.columns.values:
+                msg = f"The name '{col_name}' is not in the columns of the dataframe."
+                raise ValueError(msg)
+
+            for col in cols:
+                evol_ax = plot_rhis_evol(
+                    col,
+                    self.evol_df,
+                    self.evol_df_rhis,
+                    self.direction,
+                    kwargs.get('figsize'),
+                    kwargs.get('xlabel'),
+                    kwargs.get('rhis_params'),
+                    kwargs.get('rhis_stat_params'),
+                    rhis=rhis
+                    )
+                data_ax = plot_data(
+                    evol_ax,
+                    col,
+                    self.orig_df,
+                    kwargs.get('ylabel'),
+                    kwargs.get('data_params'),
+                    kwargs.get('repr_params'),
+                    show_repr=show_repr
+                    )
+                filename = 'rhis_evol_' + col.lower().strip() + '.' + save_format
+                filename_clean = filename.replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
+                col_save_path = filename if save_dir_path is None else f'{save_dir_path}{filename_clean}'
+                finalize_plot(
+                    evol_ax,
+                    data_ax,
+                    self.alpha,
+                    kwargs.get('figtitle'),
+                    kwargs.get('alpha_line_params'),
+                    col_save_path
+                    )
+        except (PlotEvolError, ValueError) as exc:
+            logger.exception(exc)
 
 if __name__ == '__main__':
 
