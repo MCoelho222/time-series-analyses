@@ -20,7 +20,7 @@ def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str, s
             break
         idx += 1
 
-    if direction == 'fo':
-        idx = len(ps) - idx + sli_init
+    if direction == 'fo' and idx > 0:
+        idx = len(ps) - idx + sli_init - 1
 
     return idx

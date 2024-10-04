@@ -7,9 +7,11 @@ from loguru import logger
 from pandas import DataFrame
 
 from rhis_ts.controllers.rhis_controller import RhisController
+from rhis_ts.evol.exc import PlotEvolError
 from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
 from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
-from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol, plot_rhis_stats_evol
+from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
+from rhis_ts.evol.validators import validate_plot_params
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -87,7 +89,6 @@ class Rhis:
         logger.info("RHIS evol successfully complete.")
         return evol_df
 
-
     def _ts_evol(self, ts: Series, alpha: float=0.05):
         ts_arr = ts.to_numpy()
         fo_evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, rhis=self.rhis)
@@ -100,7 +101,6 @@ class Rhis:
         else:
             self.evol_df[(ts.name, 'fo')] = fo_evol
             self.evol_df[(ts.name, 'ba')] = ba_evol
-
 
     def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
         logger.info("Adding representative data to the original dataframe...")
@@ -122,61 +122,71 @@ class Rhis:
         logger.info("Representative data successfully added.")
         return self.orig_df
 
+    @validate_plot_params
+    def plot(
+            self,
+            col_name: str|None=None,
+            save_dir_path: str | None=None,
+            save_format: str | None='png',*,
+            rhis: bool=False,
+            show_repr: bool=True,
+            **kwargs
+            ):
+        try:
+            if self.evol_df is None:
+                msg = "Please, before trying to plot, run the evolution process by calling the 'evol' method."
+                raise PlotEvolError(msg)
 
-    def plot(self, savefig_path: str | None=None,*, rhis: bool=False, show_repr: bool=True):
-        cols = set()
-        for col, _ in self.evol_df.columns:
-            cols.add(col)
+            cols = [col_name,]
 
-        for col in cols:
-            if rhis:
-                rhis_ax = plot_rhis_evol(
+            if col_name is None:
+                cols = {col for col, _ in self.evol_df.columns}
+            elif col_name not in self.orig_df.columns.values:
+                msg = f"The name '{col_name}' is not in the columns of the dataframe."
+                raise ValueError(msg)
+
+            for col in cols:
+                evol_ax = plot_rhis_evol(
                     col,
+                    self.evol_df,
                     self.evol_df_rhis,
                     self.direction,
+                    kwargs.get('figsize'),
+                    kwargs.get('xlabel'),
+                    kwargs.get('rhis_params'),
+                    kwargs.get('rhis_stat_params'),
+                    rhis=rhis
                     )
-                data_ax = plot_data(rhis_ax, col, self.orig_df, show_repr=show_repr)
-                finalize_plot(rhis_ax, data_ax, col, self.direction)
-
-            stat_ax = plot_rhis_stats_evol(col, self.evol_df, self.direction)
-            data_ax1 = plot_data(stat_ax, col, self.orig_df, show_repr=show_repr)
-            finalize_plot(stat_ax, data_ax1, col, self.direction, savefig_path)
-
+                data_ax = plot_data(
+                    evol_ax,
+                    col,
+                    self.orig_df,
+                    kwargs.get('ylabel'),
+                    kwargs.get('data_params'),
+                    kwargs.get('repr_params'),
+                    show_repr=show_repr
+                    )
+                filename = 'rhis_evol_' + col.lower().strip() + '.' + save_format
+                filename_clean = filename.replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
+                col_save_path = filename if save_dir_path is None else f'{save_dir_path}{filename_clean}'
+                finalize_plot(
+                    evol_ax,
+                    data_ax,
+                    self.alpha,
+                    kwargs.get('figtitle'),
+                    kwargs.get('alpha_line_params'),
+                    col_save_path
+                    )
+        except (PlotEvolError, ValueError) as exc:
+            logger.exception(exc)
 
 if __name__ == '__main__':
 
-    # df = pd.read_csv('./data/BigSiouxAnnualQ.csv')
-    # df = pd.read_csv('./data/MarchMilwaukeeChloride.csv')
-    # df['Time'] = pd.to_datetime(df['Time'].astype(int), format='%Y')
-    # df.set_index('Time', inplace=True)
-
-    # rhis = RHIS(df, index_col=)
-
-    # UFPR DATASET
-    df = pd.read_excel('./data/dataset.xlsx')
-    df[df.select_dtypes(include=['object']).columns.drop('PONTO')] = \
-        df.select_dtypes(include=['object']).drop(columns='PONTO').apply(pd.to_numeric, errors='coerce')
-    df = df.loc[df['PONTO'] == 'IG5',
-                ['DATA', 'TURB (NTU)', 'TP (mg/L)']] # 'TP (mg/L)', 'COLIF_T (NMP/100mL)',
-    df['DATA'] = pd.to_datetime(df['DATA'])
-    df.set_index('DATA', inplace=True)
-    df.dropna(inplace=True)
-
-    # yearly_range = pd.date_range(start='2000-01-01', end='2013-01-01', freq='YE')
-    # monthly_range = pd.date_range(start='2013-02-20', end='2013-12-20', freq='ME')
-    # index = yearly_range.union(monthly_range)
-    # index = pd.date_range(start='2000-12-31', end='2022-12-31', freq='YE')
-
-    # ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, \
-    #       11, 5, 5, 5, 5, 5, 5, 5, 5, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-
-    # df = pd.DataFrame({'data': ts})
+    df = pd.read_csv('./data/MarchMilwaukeeChloride.csv')
+    df['Time'] = pd.to_datetime(df['Time'].astype(int), format='%Y')
+    df.set_index('Time', inplace=True)
 
     rhis = Rhis(df)
     evol_df = rhis.evol(stat='min', rhis=False)
-    # print(evol_df)
-    # print(rhis.orig_df)
-    # rhis_repr_df = rhis.select_repr()
-    # rhis.build_start_end_evol_repr_df()
     rhis.add_repr_cols_to_df(direction='fo')
     rhis.plot(rhis=False, show_repr=True)
