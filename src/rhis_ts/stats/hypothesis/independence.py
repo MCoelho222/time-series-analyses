@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
@@ -14,7 +13,6 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hypothesis_test_args('wald-wolfowitz')
 def wald_wolfowitz(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,*,
@@ -49,9 +47,9 @@ def wald_wolfowitz(
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
     """
-    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
     arr = np.array(ts)
 
+    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
     if np.all(arr == arr[0]):
         reject = True
         return Results(0, 0., reject)

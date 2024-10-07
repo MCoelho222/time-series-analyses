@@ -6,14 +6,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hypothesis_test_args('mann-kendall')
 def mann_kendall(
         ts: list[int|float] | np.ndarray[int|float],
         alpha: float=0.05,
@@ -50,7 +48,6 @@ def mann_kendall(
 
             'reject' is boolean. If True, the null hypothesis was reject.
     """
-    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     n = len(ts)
     ts = np.array(ts)
     signs = []
@@ -88,5 +85,6 @@ def mann_kendall(
     if alternative == 'greater':
         reject = test_s > condition_value and p < alpha
 
+    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     return Results(test_s, round(p, 4), reject, alternative)
 

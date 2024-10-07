@@ -6,12 +6,11 @@ import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
-from rhis_ts.controllers.rhis_controller import RhisController
-from rhis_ts.evol.exc import PlotEvolError
-from rhis_ts.evol.methods.repr_slice import repr_slice_idxs
-from rhis_ts.evol.methods.standard_evol import rhis_standard_evol
+from rhis_ts.evol.exc import EvolRunMissingError, PlotEvolError
+from rhis_ts.evol.methods import repr_slice_idxs, rhis_standard_evol
 from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
-from rhis_ts.evol.validators import validate_plot_params
+from rhis_ts.evol.utils.dataframe import build_init_evol_df, insert_repr_in_df_from_idx
+from rhis_ts.evol.validators import validate_evol_params, validate_plot_params
 from rhis_ts.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -19,23 +18,32 @@ if TYPE_CHECKING:
 
 
 class Rhis:
-
     def __init__(self, df):
         self.alpha = 0.05
         self.rhis = None
         self.stat = None
-        self.direction = None
+        self.backwards = True
+
+        if (not isinstance(df, pd.DataFrame)
+            or isinstance(df.index, pd.MultiIndex)
+            or isinstance(df.index, pd.MultiIndex)):
+            msg = "The parameter 'df' must be a non-MultiIndex pandas.DataFrame."
+            logger.debug(msg)
+            raise ValueError(msg)
+
         self.orig_df = df
+
         self.evol_df = None
         self.evol_df_rhis = None
         self.slice_init = slice_init(len(self.orig_df))
 
 
+    @validate_evol_params
     def evol(self,
             cols: Iterable[str]|None=None,
-            stat: str='min',
+            stat: str|None=None,
             alpha: float=0.05,*,
-            rhis: bool=False
+            backwards: bool=True
             ) -> DataFrame:
         """
         Generate a dataframe (self.evol_df or self.evol_df_rhis) with the series from
@@ -53,74 +61,75 @@ class Rhis:
                 is used, and self.evol_df is created.
             alpha
                 The significance level.
-            rhis
-                If True, the pure rhis evolution is performed and self.evol_df_rhis is created.
 
         Return
         ------
             DataFrame with p-values evolution
         """
-        mode = 'RHIS' if rhis else 'STAT'
-        msg = f"Processing RHIS evol in {mode.upper()} mode..."
+        mode = 'RHIS' if stat is None else f'RHIS-{stat}'
+        msg = f"Processing {mode} evolution..."
         logger.info(msg)
-        self.alpha = alpha
-        self.rhis = rhis
-        self.stat = stat
-        try:
-            init_df = RhisController.build_init_evol_df(self.orig_df.columns, self.orig_df.index, rhis=self.rhis)
-            if rhis:
-                self.evol_df_rhis = init_df
-            else:
-                self.evol_df = init_df
-        except AttributeError:
-            msg = "The parameter df should be an instance of pandas.DataFrame."
-            logger.exception(msg)
-        try:
-            evol_cols = cols if cols is not None else self.orig_df.columns
-            for col in evol_cols:
-                ts = self.orig_df[col]
-                self._ts_evol(ts, alpha)
-            evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_rhis[evol_cols]
-        except (ValueError, KeyError):
-            msg = "Evol process could not be complete."
-            logger.exception(msg)
 
-            return
-        logger.info("RHIS evol successfully complete.")
+        self.stat = stat
+        self.alpha = alpha
+        if not backwards:
+            self.backwards = backwards
+
+        init_df = build_init_evol_df(self.orig_df.columns, self.orig_df.index, stat)
+        if stat is None:
+            self.evol_df_rhis = init_df
+        else:
+            self.evol_df = init_df
+
+        evol_cols = cols if cols is not None else self.orig_df.columns
+        for col in evol_cols:
+            ts = self.orig_df[col]
+            self._ts_evol(ts, alpha)
+        evol_df = self.evol_df[evol_cols] if self.evol_df is not None else self.evol_df_rhis[evol_cols]
+
+        logger.info("RHIS evolution successfully complete.")
         return evol_df
+
 
     def _ts_evol(self, ts: Series, alpha: float=0.05):
         ts_arr = ts.to_numpy()
-        fo_evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, rhis=self.rhis)
-        ba_evol = rhis_standard_evol(ts_arr[::-1], alpha, self.slice_init, self.stat, rhis=self.rhis, ba=True)
-        if self.rhis:
-            for hyp, ps in fo_evol.items():
-                self.evol_df_rhis[(ts.name, 'fo', hyp)] = ps
-            for hyp, ps in ba_evol.items():
-                self.evol_df_rhis[(ts.name, 'ba', hyp)] = ps
+        if self.backwards:
+            ts_arr = ts_arr[::-1]
+
+        evol = rhis_standard_evol(ts_arr, alpha, self.slice_init, self.stat, backwards=self.backwards)
+
+        direction = 'ba' if self.backwards else 'fo'
+        if self.stat is None:
+            for hyp, ps in evol.items():
+                self.evol_df_rhis[(ts.name, direction, hyp)] = ps
         else:
-            self.evol_df[(ts.name, 'fo')] = fo_evol
-            self.evol_df[(ts.name, 'ba')] = ba_evol
+            self.evol_df[(ts.name, direction)] = evol
 
-    def add_repr_cols_to_df(self, direction: str='ba') -> DataFrame:
-        logger.info("Adding representative data to the original dataframe...")
 
-        self.direction = direction
-        if self.evol_df is None:
-            self.evol(stat=self.stat)
+    def add_repr_cols_to_df(self) -> DataFrame:
+        logger.info("Adding representative data...")
+        try:
+            if self.evol_df is None:
+                msg = 'Please, run the evolution process before adding representative data.'
+                raise EvolRunMissingError(msg)
 
-        orig_cols = self.orig_df.columns
-        for orig_col in orig_cols:
-            evol_df_cols = self.evol_df.columns
-            filtered_evol_df = self.evol_df[[col for col in evol_df_cols if col[0] == orig_col]]
-            evol_bafo = {}
-            for direct in ('ba', 'fo'):
-                evol_bafo[direct] = filtered_evol_df[(orig_col, direct)].to_numpy()
-            cut_idxs = repr_slice_idxs(evol_bafo[direction], self.alpha, self.slice_init, self.direction)
-            RhisController.insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
+            direction = 'ba' if self.backwards else 'fo'
+
+            orig_cols = self.orig_df.columns
+            for orig_col in orig_cols:
+                evol_df_cols = self.evol_df.columns
+                filtered_evol_df = self.evol_df[[col for col in evol_df_cols if col[0] == orig_col]]
+
+                evol_bafo = filtered_evol_df[(orig_col, direction)].to_numpy()
+                cut_idxs = repr_slice_idxs(evol_bafo, self.alpha, self.slice_init, direction)
+                insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
+        except (EvolRunMissingError, ValueError) as exc:
+            logger.exception(exc)
+            return exc
 
         logger.info("Representative data successfully added.")
         return self.orig_df
+
 
     @validate_plot_params
     def plot(
@@ -145,12 +154,13 @@ class Rhis:
                 msg = f"The name '{col_name}' is not in the columns of the dataframe."
                 raise ValueError(msg)
 
+            direction = 'ba' if self.backwards else 'fo'
             for col in cols:
                 evol_ax = plot_rhis_evol(
                     col,
                     self.evol_df,
                     self.evol_df_rhis,
-                    self.direction,
+                    direction,
                     kwargs.get('figsize'),
                     kwargs.get('xlabel'),
                     kwargs.get('rhis_params'),
@@ -177,6 +187,7 @@ class Rhis:
                     kwargs.get('alpha_line_params'),
                     col_save_path
                     )
+
         except (PlotEvolError, ValueError) as exc:
             logger.exception(exc)
 
@@ -187,6 +198,6 @@ if __name__ == '__main__':
     df.set_index('Time', inplace=True)
 
     rhis = Rhis(df)
-    evol_df = rhis.evol(stat='min', rhis=False)
-    rhis.add_repr_cols_to_df(direction='fo')
+    evol_df = rhis.evol(stat='min')
+    rhis.add_repr_cols_to_df()
     rhis.plot(rhis=False, show_repr=True)

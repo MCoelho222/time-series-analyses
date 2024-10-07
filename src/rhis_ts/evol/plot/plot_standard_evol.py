@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
 
+
 def plot_rhis_evol(  # noqa: PLR0913
         col_name: str,
         evol_df: DataFrame,
@@ -84,6 +85,7 @@ def plot_data(  # noqa: PLR0913
 
     data_ax.set_ylabel(ylabel if ylabel is not None else col_name)
     return data_ax
+
 
 def finalize_plot(  # noqa: PLR0913
         evol_ax: Axes,

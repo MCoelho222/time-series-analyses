@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.ranks import ranks_ties_corrected
 from rhis_ts.utils.data import break_list_in_equal_parts
 
@@ -14,7 +13,6 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hypothesis_test_args('mann-whitney')
 def mann_whitney(  # noqa: PLR0913
         x: list[int | float],
         alpha: float=0.05,
@@ -80,7 +78,6 @@ def mann_whitney(  # noqa: PLR0913
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
     """
-    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if y is None:
         data = break_list_in_equal_parts(x, 2)
         x = data[0]
@@ -92,6 +89,7 @@ def mann_whitney(  # noqa: PLR0913
     gs_concat = g1 + g2
     gs_sorted = np.sort(gs_concat)
 
+    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if np.all(gs_sorted == gs_sorted[0]):
         reject = False
         return Results(0, 1., reject, alternative)

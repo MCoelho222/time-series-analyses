@@ -5,22 +5,21 @@ from collections import namedtuple
 import scipy.stats as sts
 
 
-def p_value_normal(statistic: float) -> float:
+def p_value_normal(z: float) -> float:
     """
-    Calculate the p_value for a given test statistic,
-    using the normal distribution.
+    Calculate the p_value from the normal distribution.
 
     Parameters
     ----------
-        statistic
-            The value of the statistic of the test.
+        z
+            The z value from a test that uses normal approximation.
 
     Returns
     -------
         The p_value.
     """
-    z = abs(statistic)
-    p_value = 1 - sts.norm.cdf(z)
+    z_abs = abs(z)
+    p_value = 1 - sts.norm.cdf(z_abs)
 
     return p_value
 
