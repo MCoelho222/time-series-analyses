@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis_ts.stats.hypothesis_testing.errors.decorators import check_hypothesis_test_args
 from rhis_ts.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
@@ -13,7 +12,6 @@ if TYPE_CHECKING:
     from rhis_ts.types.stats import TestResults
 
 
-@check_hypothesis_test_args('runs')
 def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
         alpha: float=0.05,
@@ -65,7 +63,6 @@ def runs_test(  # noqa: C901
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
     """
-    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     ts = np.array(ts) if isinstance(ts, list) else ts
 
     median = np.median(np.array(ts))
@@ -80,6 +77,7 @@ def runs_test(  # noqa: C901
         if element < median:
             signs.append(-1)
 
+    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if not signs:
         reject = True
         return Results(0, 0.0, reject, alternative)
@@ -121,7 +119,7 @@ def runs_test(  # noqa: C901
     decision = test_decision_normal(stat, stat_mean, z, alternative, alpha)
     return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
 
-@check_hypothesis_test_args('wallis-moore')
+
 def wallismoore(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,
@@ -153,8 +151,8 @@ def wallismoore(
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
     """
-    Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     ts_arr = np.array(ts)
+    Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if np.all(ts_arr == ts_arr[0]):
         reject = True
         return Results(0, 0., reject, alternative)
@@ -213,7 +211,6 @@ def wallismoore(
     z = (runs - expected_runs) / sigma
 
     decision = test_decision_normal(runs, expected_runs, z, alternative, alpha)
-
     return Results(runs, round(decision.p_value, 4), decision.reject, alternative)
 
 

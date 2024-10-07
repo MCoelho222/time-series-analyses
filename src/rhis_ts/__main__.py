@@ -12,7 +12,6 @@ def main():
     EXAMPLE_DIR_PATH = join(ROOTPATH, "examples/")
 
     df = pd.read_excel('./data/dataset.xlsx')
-    print(df.info())
     df[df.select_dtypes(include=['object']).columns.drop('PONTO')] = \
         df.select_dtypes(include=['object']).drop(columns='PONTO').apply(pd.to_numeric, errors='coerce')
     df = df.loc[df['PONTO'] == 'IG5',
@@ -22,10 +21,8 @@ def main():
     df.dropna(inplace=True)
 
     rhis = Rhis(df)
-    # print(rhis.orig_df.info())
-    # print(rhis.orig_df.head())
-    rhis.evol(stat='min', rhis=True)
-    rhis.add_repr_cols_to_df(direction='ba')
+    rhis.evol(stat='mean')
+    rhis.add_repr_cols_to_df()
     title = "RHIS time series from backward evolution of p-values"
     rhis.plot(save_dir_path=EXAMPLE_DIR_PATH, rhis=False, show_repr=True, figtitle=title, figsize=(12, 6))
 

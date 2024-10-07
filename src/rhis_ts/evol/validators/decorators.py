@@ -88,7 +88,40 @@ def validate_plot_params(func):  # noqa: C901
             logger.exception(exc)
             return exc
 
-
         return func(*args, **kwargs)
 
     return _validate_plot_params
+
+
+def validate_evol_params(func):
+    @wraps(func)
+    def _validate_evol_params(*args, **kwargs):
+        try:
+            noself_args = args[1:]
+            if noself_args:
+                if not isinstance(noself_args[0], tuple) or not all(isinstance(arg, str) for arg in noself_args[0]):
+                    msg = f"The value {noself_args[0]} is invalid. The parameter 'cols' should be a tuple of strings."
+                    raise ValueError(msg)
+
+            if kwargs:
+                param_types = {
+                    'cols': (str),
+                    'stat': str,
+                    'alpha': float,
+                }
+                for k, v in kwargs.items():
+                    print(k, v)
+                    if isinstance(param_types[k], tuple):
+                        if not isinstance(v, tuple) or not all(isinstance(col, str) for col in v):
+                            msg = f"The value {v} is invalid. The parameter 'cols' should be a tuple of strings."
+                            raise ValueError(msg)
+                    elif not isinstance(v, param_types[k]):
+                        msg = f"The value {v} is invalid. The parameter {k} should be a {param_types[k].__name__}."
+                        raise ValueError(msg)
+        except ValueError as exc:
+            logger.exception(exc)
+            return exc
+
+        return func(*args, **kwargs)
+
+    return _validate_evol_params
