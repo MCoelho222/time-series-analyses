@@ -150,7 +150,6 @@ def validate_evol_params(func):  # noqa: C901
                         msg = f"The value '{val}' is invalid. The parameter '{kw}' should be a tuple of strings."
                         raise ValueError(msg)
 
-
                 elif not isinstance(val, arg_types[kw]):
                     msg = f"The value '{val}' is invalid. The parameter {kw} should be a {arg_types[kw].__name__}."
                     raise ValueError(msg)
