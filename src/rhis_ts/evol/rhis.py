@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
-from rhis_ts.evol.exc import EvolRunMissingError, PlotEvolError
+from rhis_ts.evol.exc import EvolDirectionError, EvolNotRunInDirectionError, EvolRunMissingError, PlotEvolError
 from rhis_ts.evol.methods import repr_slice_idxs, rhis_standard_evol
 from rhis_ts.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
 from rhis_ts.evol.utils.dataframe import build_init_evol_df, insert_repr_in_df_from_idx
@@ -40,7 +40,7 @@ class Rhis:
 
     @validate_evol_params
     def evol(self,
-            cols: Iterable[str]|None=None,
+            cols: tuple[str]|None=None,
             stat: str|None=None,
             alpha: float=0.05,*,
             backwards: bool=True
@@ -72,16 +72,16 @@ class Rhis:
 
         self.stat = stat
         self.alpha = alpha
-        if not backwards:
-            self.backwards = backwards
-
-        init_df = build_init_evol_df(self.orig_df.columns, self.orig_df.index, stat)
-        if stat is None:
-            self.evol_df_rhis = init_df
-        else:
-            self.evol_df = init_df
+        self.backwards = backwards
 
         evol_cols = cols if cols is not None else self.orig_df.columns
+        if self.evol_df_rhis is None and stat is None:
+            init_df = build_init_evol_df(evol_cols, self.orig_df.index, stat, backwards=backwards)
+            self.evol_df_rhis = init_df
+        if self.evol_df is None and stat is not None:
+            init_df = build_init_evol_df(evol_cols, self.orig_df.index, stat, backwards=backwards)
+            self.evol_df = init_df
+
         for col in evol_cols:
             ts = self.orig_df[col]
             self._ts_evol(ts, alpha)
@@ -106,24 +106,31 @@ class Rhis:
             self.evol_df[(ts.name, direction)] = evol
 
 
-    def add_repr_cols_to_df(self) -> DataFrame:
+    def add_repr_cols_to_df(self,*, backwards: bool=True) -> DataFrame:
         logger.info("Adding representative data...")
         try:
             if self.evol_df is None:
                 msg = 'Please, run the evolution process before adding representative data.'
                 raise EvolRunMissingError(msg)
+            if not isinstance(backwards, bool):
+                msg = f"The value '{backwards}' is invalid. The 'backwards' parameter should be a boolean."
+                raise EvolDirectionError(msg)
 
-            direction = 'ba' if self.backwards else 'fo'
+            direction = 'ba' if backwards else 'fo'
 
             orig_cols = self.orig_df.columns
             for orig_col in orig_cols:
                 evol_df_cols = self.evol_df.columns
                 filtered_evol_df = self.evol_df[[col for col in evol_df_cols if col[0] == orig_col]]
 
+                if (orig_col, direction) not in filtered_evol_df.columns:
+                    direction_name = 'backwards' if backwards else 'forwards'
+                    msg = f"Please, run the evolution process in the {direction_name} direction."
+                    raise EvolNotRunInDirectionError(msg)
                 evol_bafo = filtered_evol_df[(orig_col, direction)].to_numpy()
                 cut_idxs = repr_slice_idxs(evol_bafo, self.alpha, self.slice_init, direction)
                 insert_repr_in_df_from_idx(self.orig_df, cut_idxs, orig_col)
-        except (EvolRunMissingError, ValueError) as exc:
+        except (EvolDirectionError, EvolNotRunInDirectionError, EvolRunMissingError, ValueError) as exc:
             logger.exception(exc)
             return exc
 
@@ -199,5 +206,8 @@ if __name__ == '__main__':
 
     rhis = Rhis(df)
     evol_df = rhis.evol(stat='min')
-    rhis.add_repr_cols_to_df()
-    rhis.plot(rhis=False, show_repr=True)
+    # evol_df = rhis.evol(stat='min', backwards=False)
+    # print(rhis.evol_df.head())
+    rhis.add_repr_cols_to_df(backwards='True')
+    # print(rhis.evol_df.head())
+    # rhis.plot(rhis=False, show_repr=True)

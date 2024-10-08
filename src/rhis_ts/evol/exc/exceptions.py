@@ -6,3 +6,9 @@ class PlotEvolError(Exception):
 
 class EvolRunMissingError(Exception):
     pass
+
+class EvolDirectionError(Exception):
+    pass
+
+class EvolNotRunInDirectionError(Exception):
+    pass
