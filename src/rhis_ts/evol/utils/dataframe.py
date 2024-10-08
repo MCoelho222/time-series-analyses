@@ -21,16 +21,16 @@ def insert_repr_in_df_from_idx(df: DataFrame, idx: tuple, df_col: str):
     df.loc[:, df_col + '_repr'] = full_ts
 
 
-def build_init_evol_df(orig_colnames: list[str], index: Index, stat: str|None) -> DataFrame:
+def build_init_evol_df(orig_colnames: list[str], index: Index, stat: str|None,*, backwards: bool) -> DataFrame:
     cols_tuples = []
     for col in orig_colnames:
-        for direct in ('ba', 'fo'):
-            if stat is None:
-                hyps = ['R', 'H', 'I', 'S']
-                for hyp in hyps:
-                    cols_tuples.append((col, direct, hyp))
-            else:
-                cols_tuples.append((col, direct))
+        direction = 'ba' if backwards else 'fo'
+        if stat is None:
+            hyps = ['R', 'H', 'I', 'S']
+            for hyp in hyps:
+                cols_tuples.append((col, direction, hyp))
+        else:
+            cols_tuples.append((col, direction))
 
     cols = pd.MultiIndex.from_tuples(cols_tuples)
     result_df = pd.DataFrame(columns=cols, index=index)
