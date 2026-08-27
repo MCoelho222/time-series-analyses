@@ -3,5 +3,6 @@ bokeh
 loguru
 matplotlib
 numpy
+openpyxl
 pandas
 scipy
