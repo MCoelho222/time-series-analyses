@@ -8,7 +8,7 @@ import numpy as np
 from rhis.utils.arrays import nans_nums_from_array
 
 if TYPE_CHECKING:
-    from rhis.types.data import TimeSeriesFlex
+    from rhis.custom_types.data import TimeSeriesFlex
 
 
 def idx_of_last_not_rejected(alpha: float, ps: TimeSeriesFlex, direction: str, sli_init: int) -> int:

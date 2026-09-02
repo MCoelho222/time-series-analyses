@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import NamedTuple
+from typing import Literal, NamedTuple, TypeAlias
 
 
 @dataclass
@@ -11,3 +11,5 @@ class TestResults(NamedTuple):
     statistic: float
     p_value: float
     alternative: str
+
+RhisCode: TypeAlias = Literal["r", "h", "i", "s"]

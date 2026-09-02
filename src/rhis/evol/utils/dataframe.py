@@ -24,7 +24,7 @@ def insert_repr_in_df_from_idx(df: DataFrame, idx: tuple, df_col: str):
 def build_init_evol_df(orig_colnames: list[str], index: Index, stat: str|None,*, backwards: bool) -> DataFrame:
     cols_tuples = []
     for col in orig_colnames:
-        direction = 'ba' if backwards else 'fo'
+        direction = 'backwards' if backwards else 'forward'
         if stat is None:
             hyps = ['R', 'H', 'I', 'S']
             for hyp in hyps:

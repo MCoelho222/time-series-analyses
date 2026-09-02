@@ -6,7 +6,7 @@ import numpy as np
 
 if TYPE_CHECKING:
 
-    from rhis.types.data import TimeSeriesFlex
+    from rhis.custom_types.data import TimeSeriesFlex
 
 
 def break_list_in_equal_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeriesFlex]:

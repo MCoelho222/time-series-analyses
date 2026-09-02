@@ -9,8 +9,8 @@ import scipy.stats as sts
 from rhis.stats.utils.ranks import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
-    from rhis.types.data import TimeSeriesFlex
-    from rhis.types.stats import TestResults
+    from rhis.custom_types.data import TimeSeriesFlex
+    from rhis.custom_types.stats import TestResults
 
 
 def wald_wolfowitz(

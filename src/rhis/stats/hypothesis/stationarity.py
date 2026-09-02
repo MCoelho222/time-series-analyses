@@ -9,7 +9,7 @@ import scipy.stats as sts
 from rhis.stats.utils.ranks import ranks_ties_corrected
 
 if TYPE_CHECKING:
-    from rhis.types.stats import TestResults
+    from rhis.custom_types.stats import TestResults
 
 
 def mann_kendall(

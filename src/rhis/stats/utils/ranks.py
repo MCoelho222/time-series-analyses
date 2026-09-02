@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from rhis.types.data import TimeSeriesFlex
+    from rhis.custom_types.data import TimeSeriesFlex
 
 
 def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:

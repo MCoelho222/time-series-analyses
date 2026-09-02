@@ -25,7 +25,7 @@ def main():
 
     rhis = Rhis(df)
     rhis.evol(stat='min')
-    rhis.add_repr_cols_to_df()
+    rhis.mark_representative_data_with_bool()
 
     print(rhis.orig_df.tail())
     print(rhis.orig_df.info())

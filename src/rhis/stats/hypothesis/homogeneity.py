@@ -10,7 +10,7 @@ from rhis.stats.utils.ranks import ranks_ties_corrected
 from rhis.utils.data import break_list_in_equal_parts
 
 if TYPE_CHECKING:
-    from rhis.types.stats import TestResults
+    from rhis.custom_types.stats import TestResults
 
 
 def mann_whitney(  # noqa: PLR0913

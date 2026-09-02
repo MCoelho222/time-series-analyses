@@ -8,8 +8,8 @@ import numpy as np
 from rhis.stats.utils.p_value import test_decision_normal
 
 if TYPE_CHECKING:
-    from rhis.types.data import TimeSeriesFlex
-    from rhis.types.stats import TestResults
+    from rhis.custom_types.data import TimeSeriesFlex
+    from rhis.custom_types.stats import TestResults
 
 
 def runs_test(  # noqa: C901
