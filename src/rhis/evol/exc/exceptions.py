@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 
-class PlotEvolError(Exception):
-    pass
-
-class EvolRunMissingError(Exception):
+class RhisEvolNotCalledError(Exception):
     pass
 
 class EvolDirectionError(Exception):
     pass
 
 class EvolNotRunInDirectionError(Exception):
+    pass
+
+
+class PlotRhisFullWithStatDefinedError(Exception):
     pass

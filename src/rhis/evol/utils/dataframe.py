@@ -18,6 +18,9 @@ def insert_repr_in_df_from_idx(df: DataFrame, idx: tuple, df_col: str):
     full_ts = np.append(nan_init, nums_ts)
     full_ts = np.append(full_ts, nan_fin)
 
+    # if bool_col:
+    #     full_ts = np.where(pd.isna(full_ts), 0, 1)
+
     df.loc[:, df_col + '_repr'] = full_ts
 
 

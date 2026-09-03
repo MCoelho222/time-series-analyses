@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 def plot_rhis_evol(  # noqa: PLR0913, PLR0917
         col_name: str,
-        evol_df: DataFrame,
-        evol_df_rhis: DataFrame,
+        rhis_statistic_df: DataFrame,
+        rhis_full_df: DataFrame,
         direction: str,
         figsize: tuple[int]|None=None,
         xlabel: str|None=None,
@@ -28,14 +28,14 @@ def plot_rhis_evol(  # noqa: PLR0913, PLR0917
         hypos = ['R', 'H', 'I', 'S']
         colors_default = {'R': 'm', 'H': 'c', 'I': 'r', 'S': 'b'}
         for i in range(len(hypos)):
-            ax = evol_df_rhis[(col_name, direction, hypos[i])].plot(
+            ax = rhis_full_df[(col_name, direction, hypos[i])].plot(
                 figsize=figsize,
                 color=rhis_params.get('colors', colors_default)[hypos[i]],
                 alpha=rhis_params.get('alpha', 0.4),
                 linestyle=rhis_params.get('linestyle', '-'),
                 linewidth=rhis_params.get('linewidth', 1))
     else:
-        ax = evol_df[(col_name, direction)].plot(
+        ax = rhis_statistic_df[(col_name, direction)].plot(
             figsize=figsize,
             color=rhis_stat_params.get('color', 'b'),
             alpha=rhis_stat_params.get('alpha', 1),

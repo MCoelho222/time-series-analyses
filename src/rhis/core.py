@@ -6,11 +6,18 @@ import pandas as pd
 from loguru import logger
 from pandas import DataFrame
 
-from rhis.evol.exc import EvolDirectionError, EvolNotRunInDirectionError, EvolRunMissingError, PlotEvolError
+from rhis.evol.exc.exceptions import PlotRhisFullWithStatDefinedError, RhisEvolNotCalledError
 from rhis.evol.methods import representative_slice_idxs, rhis_standard_evol
 from rhis.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
 from rhis.evol.utils.dataframe import build_init_evol_df, insert_repr_in_df_from_idx
-from rhis.evol.validators import validate_evol_params, validate_plot_params
+from rhis.evol.validators import (
+    validate_evol_params,
+    validate_or_raise_plot_rhis_full_with_stat_defined,
+    validate_or_raise_rhis_full_evol_not_called,
+    validate_or_raise_rhis_statistic_evol_not_called,
+    validate_or_raise_target_hyp_param_incorrect,
+    validate_plot_params,
+)
 from rhis.utils.data import slice_init
 
 if TYPE_CHECKING:
@@ -106,25 +113,10 @@ class Rhis:
             self.rhis_statistic_df[(ts.name, self.direction)] = evol
 
 
-    def mark_representative_data_with_bool(self, target_hyp: RhisCode | None=None) -> DataFrame:
-        if target_hyp is not None and target_hyp not in {'r', 'h', 'i', 's'}:
-            msg = "target_hyp must be one of 'r', 'h', 'i', or 's'."
-            logger.debug(msg)
-            raise ValueError(msg)
-
-        if self.stat is None and target_hyp is None:
-            msg = 'You must define the target_hyp (target hypothesis) to mark the representative data.'
-            logger.debug(msg)
-            raise ValueError(msg)
-
-        if self.stat is not None and target_hyp is not None:
-            msg = f"target_hyp was passed but won't be used since self.stat is defined as '{self.stat}'."
-            logger.info(msg)
-
-        if self.stat is not None and self.rhis_statistic_df is None:
-            msg = 'You should run `Rhis.evol()` first.'
-            logger.debug(msg)
-            raise EvolRunMissingError(msg)
+    def add_rhis_compliant_to_df(self, target_hyp: RhisCode | None=None) -> DataFrame:
+        validate_or_raise_rhis_statistic_evol_not_called(self.rhis_statistic_df, self.stat)
+        validate_or_raise_rhis_full_evol_not_called(self.rhis_full_df, self.stat)
+        validate_or_raise_target_hyp_param_incorrect(target_hyp, self.stat)
 
         original_cols = self.orig_df.columns
         for original_col in original_cols:
@@ -154,25 +146,29 @@ class Rhis:
             **kwargs
             ):
         try:
-            if self.rhis_statistic_df is None:
-                msg = "Please, before trying to plot, run the evolution process by calling the 'evol' method."
-                raise PlotEvolError(msg)
+            validate_or_raise_rhis_statistic_evol_not_called(self.rhis_statistic_df, self.stat)
+            validate_or_raise_rhis_full_evol_not_called(self.rhis_full_df, self.stat)
+            if rhis:
+                validate_or_raise_plot_rhis_full_with_stat_defined(self.rhis_full_df, self.stat)
 
             cols = [col_name,]
 
             if col_name is None:
-                cols = {col for col, _ in self.rhis_statistic_df.columns}
+                cols = (
+                    {col for col, _, _ in self.rhis_full_df.columns}
+                    if self.stat is None
+                    else {col for col, _ in self.rhis_statistic_df.columns}
+                )
             elif col_name not in self.orig_df.columns.values:
-                msg = f"The name '{col_name}' is not in the columns of the dataframe."
+                msg = f"The name '{col_name}' is not a valid column."
                 raise ValueError(msg)
 
-            direction = 'ba' if self.backwards else 'fo'
             for col in cols:
                 evol_ax = plot_rhis_evol(
                     col,
                     self.rhis_statistic_df,
                     self.rhis_full_df,
-                    direction,
+                    self.direction,
                     kwargs.get('figsize'),
                     kwargs.get('xlabel'),
                     kwargs.get('rhis_params'),
@@ -200,7 +196,7 @@ class Rhis:
                     col_save_path
                     )
 
-        except (PlotEvolError, ValueError) as exc:
+        except (PlotRhisFullWithStatDefinedError, RhisEvolNotCalledError, ValueError) as exc:
             logger.exception(exc)
 
 if __name__ == '__main__':
@@ -210,7 +206,8 @@ if __name__ == '__main__':
     df.set_index('Time', inplace=True)
 
     rhis = Rhis(df)
-    rhis.evol()
-    rhis.mark_representative_data_with_bool(target_hyp='s')
-    print(rhis.orig_df.head())
-    # rhis.plot()
+    rhis.evol(stat='min')
+    rhis.add_rhis_compliant_to_df()
+    rhis.plot(rhis=False)
+    print(rhis.orig_df.head(10))
+    print(rhis.orig_df.tail(10))
