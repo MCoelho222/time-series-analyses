@@ -9,7 +9,7 @@ import pandas as pd
 from rhis.core import Rhis
 
 if TYPE_CHECKING:
-    from pandas import DataFrame
+    from pandas import DataFrame, Index
 
 
 def generate_example_data() -> DataFrame:
@@ -29,16 +29,7 @@ def generate_example_data() -> DataFrame:
     return df
 
 
-def main() -> None:
-    df = generate_example_data()
-    orig_cols = df.columns
-    rhis = Rhis(df)
-    rhis.evol()
-    rhis.add_rhis_compliant_to_df()
-
-    orig_df = rhis.orig_df
-    rhis_df = rhis.rhis_df
-    alpha = rhis.alpha
+def plot_rhis(orig_df: DataFrame, rhis_df: DataFrame, orig_cols: Index[str],  alpha: float,*, show_repr: bool = True) -> None:
     alpha_label = f"alpha={alpha}"
     hypotheses = ['R', 'H', 'I', 'S']
     colors_default = {'R': 'black', 'H': 'cyan', 'I': 'green', 'S': 'blue'}
@@ -48,13 +39,15 @@ def main() -> None:
 
         series_ax = pvalue_ax.twinx()
 
-        series_ax.scatter(orig_df.index, orig_df[series_name], color='black', edgecolors='none', alpha=0.4, label=series_name)
-        repr_name = series_name + "_repr"
-        series_ax.scatter(orig_df.index, orig_df[repr_name], color='black', edgecolors='none', label=repr_name)
+        series_ax.scatter(orig_df.index, orig_df[series_name], color='black', edgecolors='none', alpha=0.2, label=series_name)
+
+        if show_repr:
+            repr_name = series_name + "_repr"
+            series_ax.scatter(orig_df.index, orig_df[repr_name], color='black', edgecolors='none', label=repr_name)
+
         pvalue_ax.plot(rhis_df[(series_name, 'min')], color='black', linewidth=6, alpha=0.2, label='RHIS-min')
         for hyp in hypotheses:
             pvalue_ax.plot(rhis_df[(series_name, hyp)], color=colors_default[hyp], alpha=0.5, label=hyp)
-
 
         pvalue_ax.axhline(alpha, color='red', linestyle='--', linewidth=1, label=alpha_label)
 
@@ -78,6 +71,34 @@ def main() -> None:
         fig.tight_layout()
 
         plt.show()
+
+
+def main() -> None:
+    df = generate_example_data()
+    orig_cols = df.columns
+    rhis = Rhis(df)
+    rhis.evol()
+    rhis.add_rhis_compliant_to_df()
+
+    orig_df = rhis.orig_df
+    rhis_df = rhis.rhis_df
+    alpha = rhis.alpha
+
+    plot_rhis(orig_df, rhis_df, orig_cols, alpha)
+
+    repr_cols = ['series_A_repr', 'series_B_repr', 'series_C_repr', 'series_D_repr']
+    repr_df = rhis.orig_df[repr_cols]
+    repr_df_cols = repr_df.columns
+
+    repr_rhis = Rhis(repr_df)
+    repr_rhis.evol()
+    repr_rhis.add_rhis_compliant_to_df()
+
+    repr_orig_df = repr_rhis.orig_df
+    repr_rhis_df = repr_rhis.rhis_df
+    repr_alpha = repr_rhis.alpha
+
+    plot_rhis(repr_orig_df, repr_rhis_df, repr_df_cols, repr_alpha)
 
 if __name__ == "__main__":
     main()

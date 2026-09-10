@@ -12,7 +12,7 @@ from rhis.stats.hypothesis.homogeneity import mann_whitney
 from rhis.stats.hypothesis.independence import wald_wolfowitz
 from rhis.stats.hypothesis.randomness import wallismoore
 from rhis.stats.hypothesis.stationarity import mann_kendall
-from rhis.utils import nans_nums_from_array, slice_init, slices_to_evol
+from rhis.utils import clean_numeric_array, nans_nums_from_array, slice_init, slices_to_evol
 
 if TYPE_CHECKING:
     from pandas import Series
@@ -21,12 +21,23 @@ if TYPE_CHECKING:
     from rhis.custom_types.data import TimeSeriesFlex
 
 
+MIN_NUMERIC_VALUES = 10
+
+
 class Rhis:
     def __init__(self, df) -> None:
         if (not isinstance(df, pd.DataFrame) or isinstance(df.index, pd.MultiIndex)):
             msg = "The parameter 'df' must be a non-MultiIndex pandas.DataFrame."
             logger.debug(msg)
             raise ValueError(msg)
+
+        for column in df.columns:
+            numeric_values = pd.to_numeric(df[column], errors='coerce').to_numpy(dtype=float)
+            numeric_count = np.count_nonzero(np.isfinite(numeric_values))
+            if numeric_count < MIN_NUMERIC_VALUES:
+                msg = (f"Series {column} has fewer than 10 numeric values ({numeric_count}). "
+                       "Statistical results will have no useful meaning.")
+                logger.debug(msg)
 
         self.orig_df = df
         self.rhis_df = None
@@ -185,6 +196,7 @@ class Rhis:
 
     @staticmethod
     def calculate_rhis(ts: TimeSeriesFlex, alpha: float) -> list[float]:
+        ts = clean_numeric_array(ts)
         tests = (
             wallismoore,
             mann_whitney,
