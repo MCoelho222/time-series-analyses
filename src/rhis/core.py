@@ -8,17 +8,21 @@ from loguru import logger
 from pandas import DataFrame, Index
 
 from rhis.exceptions import raise_if_no_rhis_run
-from rhis.stats.utils import calculate_rhis
+from rhis.stats.hypothesis.homogeneity import mann_whitney
+from rhis.stats.hypothesis.independence import wald_wolfowitz
+from rhis.stats.hypothesis.randomness import wallismoore
+from rhis.stats.hypothesis.stationarity import mann_kendall
 from rhis.utils import nans_nums_from_array, slice_init, slices_to_evol
 
 if TYPE_CHECKING:
     from pandas import Series
 
     from rhis.custom_types import RhisCode, RhisStat
+    from rhis.custom_types.data import TimeSeriesFlex
 
 
 class Rhis:
-    def __init__(self, df):
+    def __init__(self, df) -> None:
         if (not isinstance(df, pd.DataFrame) or isinstance(df.index, pd.MultiIndex)):
             msg = "The parameter 'df' must be a non-MultiIndex pandas.DataFrame."
             logger.debug(msg)
@@ -44,7 +48,7 @@ class Rhis:
         return result_df
 
 
-    def _include_rhis_compliant_ts_in_df(self, df: DataFrame, idx: tuple, df_col: str):
+    def _include_rhis_compliant_ts_in_df(self, df: DataFrame, idx: tuple, df_col: str) -> None:
         orig_ts = df[df_col].to_numpy()
         nums_ts = orig_ts[idx[0]:idx[1]]
         nan_init = np.full(idx[0], np.nan)
@@ -75,7 +79,7 @@ class Rhis:
         return idx, ps_last
 
 
-    def _include_rhis_stats_in_df(self, df: DataFrame):
+    def _include_rhis_stats_in_df(self, df: DataFrame) -> None:
         col_groups = [df.columns[i:i + 4] for i in range(0, len(df.columns), 4)]
         for group in col_groups:
             df[(group[0][0], "min")] = df[group].min(axis=1)
@@ -90,7 +94,7 @@ class Rhis:
         evol = {'R': [], 'H': [], 'I': [], 'S': []}
 
         for sli in slices:
-            r, h, i, s = calculate_rhis(sli, alpha, min=False)
+            r, h, i, s = Rhis.calculate_rhis(sli, alpha)
             evol['R'].append(r)
             evol['H'].append(h)
             evol['I'].append(i)
@@ -112,7 +116,7 @@ class Rhis:
         return evol_dict
 
 
-    def _ts_evol(self, ts: Series,*, include_rhis_stats: bool):
+    def _ts_evol(self, ts: Series,*, include_rhis_stats: bool) -> None:
         evol = self._rhis_evol_raw(ts, self.alpha, self.length_init_ts)
         if include_rhis_stats:
             evol = self._add_rhis_stats_to_evol(evol)
@@ -178,15 +182,19 @@ class Rhis:
         logger.info("RHIS compliant data successfully included in the dataframe.")
         return self.orig_df
 
-if __name__ == '__main__':
 
-    df = pd.read_csv('./data/MarchMilwaukeeChloride.csv')
-    df['Time'] = pd.to_datetime(df['Time'].astype(int), format='%Y')
-    df.set_index('Time', inplace=True)
+    @staticmethod
+    def calculate_rhis(ts: TimeSeriesFlex, alpha: float) -> list[float]:
+        tests = (
+            wallismoore,
+            mann_whitney,
+            wald_wolfowitz,
+            mann_kendall,
+        )
 
-    rhis = Rhis(df)
-    rhis.evol(include_rhis_stats=False)
-    rhis.add_rhis_compliant_to_df('min')
-    print(rhis.orig_df.info())
-    print(rhis.rhis_df.info())
+        return [
+            test(ts, alpha).p_value
+            for test in tests
+        ]
+
 

@@ -6,9 +6,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from rhis.custom_types import TimeSeriesFlex
+    from numpy.typing import NDArray
 
-def nans_nums_from_array(ps: TimeSeriesFlex,*, only_nums: bool = True) -> TimeSeriesFlex:
+
+def nans_nums_from_array(
+    ps: NDArray[np.int64 | np.float64], *, only_nums: bool = True
+) -> NDArray[np.int64 | np.float64] | tuple[
+    NDArray[np.int64 | np.float64], NDArray[np.int64 | np.float64]
+]:
     ps_mask = np.isnan(ps)
     ps_nums = ps[~ps_mask]
 

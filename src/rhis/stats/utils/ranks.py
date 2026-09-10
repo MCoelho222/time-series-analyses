@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from rhis.custom_types.data import TimeSeriesFlex
+    from numpy.typing import NDArray
+
+    from rhis.custom_types import TiesData, TimeSeriesFlex
 
 
 def get_ties_index(ts: TimeSeriesFlex, start: int = 0) -> list[int]:
@@ -42,8 +44,11 @@ def get_ties_index(ts: TimeSeriesFlex, start: int = 0) -> list[int]:
     return tie_ranks
 
 
-def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool = False) \
-      -> list[int | float] | dict[str, str | int]:  # noqa: C901
+def ranks_ties_corrected(  # noqa: C901
+    ts: TimeSeriesFlex,
+    *,
+    ties_data: bool = False,
+    ) -> NDArray[np.int64 | np.float64] | TiesData:
     """
     Apply correction for ties.
 
@@ -91,20 +96,20 @@ def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool = False) \
         unique_ranks = np.unique(ranks)
         for rank in unique_ranks:
             count = np.count_nonzero(np.array(ranks) == rank)
-            ties_group_counts.append(count if count > 0 else 1)
+            ties_group_counts.append(int(count) if count > 0 else 1)
 
-        ties_data = {
+        ties_result: TiesData = {
             'corrected_ranks': ranks,
-            'tied_ranks': ties_index, # The indexes where ties are present.
-            'ties_count': len(ties_group_counts), # How many groups of ties.
-            'ties_groups_count': ties_group_counts, # How many elements in each tie group.
+            'tied_ranks': ties_index, # The indexes where ties are present
+            'ties_count': len(ties_group_counts), # The number of ties groups
+            'ties_groups_count': ties_group_counts, # The number of elements in each tie group
         }
 
-        return ties_data
+        return ties_result
     return ranks
 
 
-def to_ranks(ts: TimeSeriesFlex) -> TimeSeriesFlex:
+def to_ranks(ts: TimeSeriesFlex) -> list[int | float]:
     """
     Transform the original series in a series of ranks.
 
