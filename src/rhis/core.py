@@ -8,7 +8,8 @@ from loguru import logger
 from pandas import DataFrame, Index
 
 from rhis.exceptions import raise_if_no_rhis_run
-from rhis.utils import calculate_rhis, nans_nums_from_array, slice_init, slices_to_evol
+from rhis.stats.utils import calculate_rhis
+from rhis.utils import nans_nums_from_array, slice_init, slices_to_evol
 
 if TYPE_CHECKING:
     from pandas import Series

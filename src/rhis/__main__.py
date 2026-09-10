@@ -28,7 +28,8 @@ def generate_example_data() -> DataFrame:
 
     return df
 
-def main():
+
+def main() -> None:
     df = generate_example_data()
     orig_cols = df.columns
     rhis = Rhis(df)

@@ -5,18 +5,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis.stats.utils.p_value import test_decision_normal
+from rhis.stats.utils import test_decision_normal
 
 if TYPE_CHECKING:
-    from rhis.custom_types.data import TimeSeriesFlex
-    from rhis.custom_types.stats import TestResults
+    from rhis.custom_types import TestResults, TimeSeriesFlex
 
 
 def runs_test(  # noqa: C901
         ts: TimeSeriesFlex,
-        alpha: float=0.05,
+        alpha: float = 0.05,
         alternative: str = 'two-sided',*,
-        continuity: bool=True
+        continuity: bool = True
         ) -> TestResults:
     """
     Apply the Single-Sample Runs Test in on a time series. Uses the median as a

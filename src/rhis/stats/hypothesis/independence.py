@@ -6,11 +6,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis.stats.utils.ranks import ranks_ties_corrected, to_ranks
+from rhis.stats.utils import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
-    from rhis.custom_types.data import TimeSeriesFlex
-    from rhis.custom_types.stats import TestResults
+    from rhis.custom_types import TestResults, TimeSeriesFlex
 
 
 def wald_wolfowitz(

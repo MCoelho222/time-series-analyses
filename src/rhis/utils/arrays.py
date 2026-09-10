@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from rhis.custom_types.data import TimeSeriesFlex
+    from rhis.custom_types import TimeSeriesFlex
 
-def nans_nums_from_array(ps: TimeSeriesFlex,*, only_nums: bool=True) -> TimeSeriesFlex:
+def nans_nums_from_array(ps: TimeSeriesFlex,*, only_nums: bool = True) -> TimeSeriesFlex:
     ps_mask = np.isnan(ps)
     ps_nums = ps[~ps_mask]
 

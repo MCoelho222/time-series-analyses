@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis.stats.utils.ranks import ranks_ties_corrected
+from rhis.stats.utils import ranks_ties_corrected
 
 if TYPE_CHECKING:
-    from rhis.custom_types.stats import TestResults
+    from rhis.custom_types import TestResults, TimeSeriesFlex
 
 
 def mann_kendall(
-        ts: list[int|float] | np.ndarray[int|float],
-        alpha: float=0.05,
+        ts: TimeSeriesFlex,
+        alpha: float = 0.05,
         alternative: str = 'two-sided',
     ) -> TestResults:
     """

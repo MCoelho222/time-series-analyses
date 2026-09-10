@@ -6,21 +6,21 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis.stats.utils.ranks import ranks_ties_corrected
+from rhis.stats.utils import ranks_ties_corrected
 from rhis.utils.data import split_into_parts
 
 if TYPE_CHECKING:
-    from rhis.custom_types.stats import TestResults
+    from rhis.custom_types import TestResults, TimeSeriesFlex
 
 
 def mann_whitney(  # noqa: PLR0913
-        x: list[int | float],
-        alpha: float=0.05,
-        alternative: str='two-sided',
-        y: list[int | float] | None = None,
+        x: TimeSeriesFlex,
+        alpha: float = 0.05,
+        alternative: str = 'two-sided',
+        y: TimeSeriesFlex | None = None,
         *,
-        continuity: bool=True,
-        ties: bool=True,
+        continuity: bool = True,
+        ties: bool = True,
         ) -> TestResults:
     """
     Compare two independent groups of data using the Mann-Whitney U test.

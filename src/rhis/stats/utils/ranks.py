@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from rhis.custom_types.data import TimeSeriesFlex
 
 
-def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
+def get_ties_index(ts: TimeSeriesFlex, start: int = 0) -> list[int]:
     """
     Check if there equal numbers in sequence and get their ranks.
 
@@ -41,7 +41,8 @@ def get_ties_index(ts: TimeSeriesFlex, start: int=0) -> list[int]:
 
     return tie_ranks
 
-def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
+
+def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool = False) \
       -> list[int | float] | dict[str, str | int]:  # noqa: C901
     """
     Apply correction for ties.
@@ -101,6 +102,7 @@ def ranks_ties_corrected(ts: TimeSeriesFlex,*, ties_data: bool=False) \
 
         return ties_data
     return ranks
+
 
 def to_ranks(ts: TimeSeriesFlex) -> TimeSeriesFlex:
     """
