@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from rhis.core import Rhis
 
+if TYPE_CHECKING:
+    from pandas import DataFrame
 
-def main():
-    rng = np.random.default_rng()
+
+def generate_example_data() -> DataFrame:
+    rng = np.random.default_rng(42)
 
     df = pd.DataFrame({
         "series_A": np.clip(rng.normal(50, 15, 100), 0, 100),
@@ -21,75 +26,57 @@ def main():
     df["series_A"] = np.sort(df["series_A"].to_numpy())
     df["series_B"] = np.sort(df["series_B"].to_numpy())
 
-    cols = df.columns
+    return df
+
+def main():
+    df = generate_example_data()
+    orig_cols = df.columns
     rhis = Rhis(df)
     rhis.evol()
-    rhis_stat = 'min'
-    rhis.add_rhis_compliant_to_df(rhis_stat)
+    rhis.add_rhis_compliant_to_df()
 
     orig_df = rhis.orig_df
     rhis_df = rhis.rhis_df
     alpha = rhis.alpha
+    alpha_label = f"alpha={alpha}"
+    hypotheses = ['R', 'H', 'I', 'S']
+    colors_default = {'R': 'black', 'H': 'cyan', 'I': 'green', 'S': 'blue'}
 
-    def plot(evol_ax, col):
-        data_ax = evol_ax.twinx()
-        data_ax.scatter(
-            x=orig_df.index,
-            y=orig_df[col],
-            label=col,
-            marker='o',
-            color='none',
-            edgecolors='k',
-            facecolors='none',
-            alpha=1,
-            s=50,
+    for series_name in orig_cols:
+        fig, pvalue_ax = plt.subplots(figsize=(8, 6))
+
+        series_ax = pvalue_ax.twinx()
+
+        series_ax.scatter(orig_df.index, orig_df[series_name], color='black', edgecolors='none', alpha=0.4, label=series_name)
+        repr_name = series_name + "_repr"
+        series_ax.scatter(orig_df.index, orig_df[repr_name], color='black', edgecolors='none', label=repr_name)
+        pvalue_ax.plot(rhis_df[(series_name, 'min')], color='black', linewidth=6, alpha=0.2, label='RHIS-min')
+        for hyp in hypotheses:
+            pvalue_ax.plot(rhis_df[(series_name, hyp)], color=colors_default[hyp], alpha=0.5, label=hyp)
+
+
+        pvalue_ax.axhline(alpha, color='red', linestyle='--', linewidth=1, label=alpha_label)
+
+        pvalue_ax.set_xlabel('Time')
+        pvalue_ax.set_ylabel('p_value')
+        pvalue_ax.set_ylim(0, 1)
+        series_ax.set_ylabel(series_name)
+        series_ax.set_ylim(0, 100)
+        series_ax.set_xlim(0, 100)
+
+        pvalue_handles, pvalue_labels = pvalue_ax.get_legend_handles_labels()
+        series_handles, series_labels = series_ax.get_legend_handles_labels()
+
+        pvalue_ax.legend(
+            pvalue_handles + series_handles,
+            pvalue_labels + series_labels,
+            loc='upper left',
         )
 
-        data_ax.scatter(
-            x=orig_df.index,
-            y=orig_df[col + '_repr'],
-            label=col + '_repr',
-            marker='o',
-            color='none',
-            edgecolors='k',
-            facecolors='k',
-            alpha=1,
-            s=50,
-        )
+        fig.suptitle(f'RHIS analysis: {series_name}', fontsize=14)
+        fig.tight_layout()
 
-        data_ax.set_ylabel(col)
-
-        label_alpha = f"alpha={alpha}"
-        evol_ax.axhline(y=alpha, color='k', linestyle='--', linewidth=0.5, alpha=0.4, label=label_alpha)
-
-        evol_ax.set_ylabel('p_value')
-        evol_ax.set_ylim(0, 1)
-
-        lines1, labels1 = evol_ax.get_legend_handles_labels()
-        lines2, labels2 = data_ax.get_legend_handles_labels()
-
-        data_ax.legend(lines1 + lines2, labels1 + labels2)
-
-        plt.title('RHIS Example', loc='left', fontsize=11)
-        plt.tight_layout()
         plt.show()
-
-    for col in cols:
-        evol_ax = rhis_df[(col, rhis_stat)].plot(figsize=(16, 8), color='b', alpha=1, linestyle='-', linewidth=1)
-        evol_ax.set_xlabel('Date')
-        plot(evol_ax, col)
-        hypotheses = ['R', 'H', 'I', 'S']
-        colors_default = {'R': 'm', 'H': 'c', 'I': 'r', 'S': 'b'}
-        for i in range(len(hypotheses)):
-            ax = rhis_df[(col, hypotheses[i])].plot(
-                figsize=(16, 8),
-                color=colors_default[hypotheses[i]],
-                alpha=0.4,
-                linestyle='-',
-                linewidth=1)
-
-        ax.set_xlabel('Date')
-        plot(ax, col)
 
 if __name__ == "__main__":
     main()

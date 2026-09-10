@@ -161,7 +161,7 @@ class Rhis:
         return self.rhis_df
 
 
-    def add_rhis_compliant_to_df(self, rhis_stat: RhisStat | RhisCode) -> DataFrame:
+    def add_rhis_compliant_to_df(self, rhis_stat: RhisStat | RhisCode='min') -> DataFrame:
         raise_if_no_rhis_run(is_rhis_complete=self.is_rhis_complete)
         cols_orig_df = self.orig_df.columns
         if rhis_stat in ['min', 'max', 'mean', 'median'] and not self.rhis_stats_included:
