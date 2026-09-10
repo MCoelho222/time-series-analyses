@@ -215,9 +215,5 @@ def wallismoore(
 
 
 if __name__ == "__main__":
-    from rhis.utils.data import slices_to_evol
-
-    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
-    tss = slices_to_evol(data)
-    for ts in tss:
-        print(wallismoore(ts).p_value)
+    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    print(wallismoore(ts).p_value)

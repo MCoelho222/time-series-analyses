@@ -88,10 +88,6 @@ def wald_wolfowitz(
     return Results(r, round(p, 4), reject)
 
 if __name__ == "__main__":
-    from rhis.utils.data import slices_to_evol
-
-    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
-    tss = slices_to_evol(data)
-    for ts in tss:
-        print(wald_wolfowitz(ts, on_ranks=False).p_value)
+    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    print(wald_wolfowitz(ts, on_ranks=False).p_value)
 

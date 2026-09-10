@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from rhis.custom_types.data import TimeSeriesFlex
 
 
-def break_list_in_equal_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeriesFlex]:
+def split_into_parts(ts: TimeSeriesFlex, parts: int) -> list[TimeSeriesFlex]:
     """
     Divide a series in multiple equal parts, as much as possible.
 
@@ -38,7 +38,7 @@ def slice_init(n: int) -> int:
     return 10 if n > limit else 5
 
 
-def slices_to_evol(ts: TimeSeriesFlex, init: int) -> list[list[int | float]]:
+def slices_to_evol(ts: TimeSeriesFlex, start: int) -> list[list[int | float]]:
     """
     Break a flat list into a list of lists (2D).
 
@@ -55,7 +55,6 @@ def slices_to_evol(ts: TimeSeriesFlex, init: int) -> list[list[int | float]]:
         A 2D list of lists. The lists are slices with increasing number of elements,
         so that the last is the complete timeseries.
     """
-    start = init
     slices = []
     for i in range(len(ts) - (start - 1)):
         slices.append(ts[: i + start])

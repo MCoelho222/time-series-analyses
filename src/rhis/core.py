@@ -2,57 +2,124 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from loguru import logger
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
-from rhis.evol.exc.exceptions import PlotRhisFullWithStatDefinedError, RhisEvolNotCalledError
-from rhis.evol.methods import representative_slice_idxs, rhis_standard_evol
-from rhis.evol.plot.plot_standard_evol import finalize_plot, plot_data, plot_rhis_evol
-from rhis.evol.utils.dataframe import build_init_evol_df, insert_repr_in_df_from_idx
-from rhis.evol.validators import (
-    validate_evol_params,
-    validate_or_raise_plot_rhis_full_with_stat_defined,
-    validate_or_raise_rhis_full_evol_not_called,
-    validate_or_raise_rhis_statistic_evol_not_called,
-    validate_or_raise_target_hyp_param_incorrect,
-    validate_plot_params,
-)
-from rhis.utils.data import slice_init
+from rhis.exceptions import raise_if_no_rhis_run
+from rhis.utils import calculate_rhis, nans_nums_from_array, slice_init, slices_to_evol
 
 if TYPE_CHECKING:
     from pandas import Series
 
-    from rhis.custom_types.stats import RhisCode
+    from rhis.custom_types import RhisCode, RhisStat
 
 
 class Rhis:
     def __init__(self, df):
-        self.alpha = 0.05
-        self.rhis = None
-        self.stat = None
-        self.backwards = True
-        self.direction = 'backwards'
-
         if (not isinstance(df, pd.DataFrame) or isinstance(df.index, pd.MultiIndex)):
             msg = "The parameter 'df' must be a non-MultiIndex pandas.DataFrame."
             logger.debug(msg)
             raise ValueError(msg)
 
         self.orig_df = df
+        self.rhis_df = None
+        self.rhis_stats_included = False
+        self.is_rhis_complete = False
+        self.alpha = 0.05
 
-        self.rhis_statistic_df = None
-        self.rhis_full_df = None
-        self.slice_init = slice_init(len(self.orig_df))
+        self.length_init_ts = slice_init(len(self.orig_df))
 
 
-    @validate_evol_params
-    def evol(self,
-            cols: tuple[str]|None=None,
-            stat: str|None=None,
-            alpha: float=0.05,*,
-            backwards: bool=True
-            ) -> DataFrame:
+    def _build_rhis_initial_df(self, df_cols: list[str], df_index: Index | None, *, include_rhis_stats: bool) -> DataFrame:
+        rhis = ['R', 'H', 'I', 'S']
+        if include_rhis_stats:
+            rhis.extend(['min', 'avg', 'med', 'max'])
+        cols = [(col, hyp) for col in df_cols for hyp in rhis]
+        multi_index_cols = pd.MultiIndex.from_tuples(cols)
+        result_df = pd.DataFrame(columns=multi_index_cols, index=df_index)
+
+        return result_df
+
+
+    def _include_rhis_compliant_ts_in_df(self, df: DataFrame, idx: tuple, df_col: str):
+        orig_ts = df[df_col].to_numpy()
+        nums_ts = orig_ts[idx[0]:idx[1]]
+        nan_init = np.full(idx[0], np.nan)
+        nan_fin= np.full(len(orig_ts) - idx[1], np.nan)
+        full_ts = np.append(nan_init, nums_ts)
+        full_ts = np.append(full_ts, nan_fin)
+
+        df.loc[:, df_col + '_repr'] = full_ts
+
+
+    def _retrieve_rhis_ts_idxs(self, ps: np.ndarray[float], alpha: float, length_init_ts: int) -> tuple[int]:
+        ps_nums = nans_nums_from_array(ps)
+
+        data = ps[:]
+        alpha_arr = np.full(len(data), alpha)
+        idx = 0
+        is_rejection = data <= alpha_arr
+
+        while is_rejection[idx]:
+            if idx == len(data) - 1:
+                break
+            idx += 1
+
+        ps_last = len(ps_nums) + length_init_ts - 1
+        if ps[0] >= alpha:
+            return (0, ps_last)
+
+        return idx, ps_last
+
+
+    def _include_rhis_stats_in_df(self, df: DataFrame):
+        col_groups = [df.columns[i:i + 4] for i in range(0, len(df.columns), 4)]
+        for group in col_groups:
+            df[(group[0][0], "min")] = df[group].min(axis=1)
+            df[(group[0][0], "mean")] = df[group].mean(axis=1)
+            df[(group[0][0], "median")] = df[group].median(axis=1)
+            df[(group[0][0], "max")] = df[group].max(axis=1)
+
+
+    def _rhis_evol_raw(self, ts: Series, alpha: float, length_init_ts: int) -> dict[list[float]]:
+        ts = ts.to_numpy()[::-1]
+        slices = slices_to_evol(ts, length_init_ts)
+        evol = {'R': [], 'H': [], 'I': [], 'S': []}
+
+        for sli in slices:
+            r, h, i, s = calculate_rhis(sli, alpha, min=False)
+            evol['R'].append(r)
+            evol['H'].append(h)
+            evol['I'].append(i)
+            evol['S'].append(s)
+
+        fill = np.full(length_init_ts - 1, np.nan)
+
+        for hyp, ps in evol.items():
+            evol[hyp] = np.append(ps[::-1], fill)
+
+        return evol
+
+
+    def _add_rhis_stats_to_evol(self, evol_dict: dict[list[float]]) -> dict[list[float]]:
+        stats_dict = {'min': np.min, 'med': np.median, 'avg': np.mean, 'max': np.max}
+        for name, method in stats_dict.items():
+            evol_dict[name] = method(list(evol_dict.values()), axis=0, keepdims=True).ravel()
+
+        return evol_dict
+
+
+    def _ts_evol(self, ts: Series,*, include_rhis_stats: bool):
+        evol = self._rhis_evol_raw(ts, self.alpha, self.length_init_ts)
+        if include_rhis_stats:
+            evol = self._add_rhis_stats_to_evol(evol)
+        for hyp, ps in evol.items():
+            self.rhis_df[(ts.name, hyp)] = ps
+
+
+    def evol(self, cols: tuple[str] | None=None, length_init_ts: int | None=None,*, include_rhis_stats: bool=True) -> DataFrame:
         """
         Generate a dataframe (self.rhis_statistic_df or self.rhis_full_df) with the series from
         the evolutional application of the randomness, homogeneity, independence and
@@ -74,130 +141,41 @@ class Rhis:
         ------
             DataFrame with p-values evolution
         """
-        mode = 'RHIS' if stat is None else f'RHIS-{stat}'
-        msg = f"Processing {mode} evolution..."
+        if length_init_ts is not None:
+            self.length_init_ts = length_init_ts
+
+        msg = "Generating RHIS series..."
         logger.info(msg)
 
-        self.stat = stat
-        self.alpha = alpha
-        self.backwards = backwards
-
-        self.direction = 'backwards' if self.backwards else 'forward'
-
         evol_cols = cols if cols is not None else self.orig_df.columns
-        init_df = build_init_evol_df(evol_cols, self.orig_df.index, stat, backwards=backwards)
-        if self.rhis_full_df is None and stat is None:
-            self.rhis_full_df = init_df
-        else:
-            self.rhis_statistic_df = init_df
-
+        self.rhis_df = self._build_rhis_initial_df(evol_cols, self.orig_df.index, include_rhis_stats=include_rhis_stats)
         for col in evol_cols:
             ts = self.orig_df[col]
-            self._ts_evol(ts)
+            self._ts_evol(ts, include_rhis_stats=include_rhis_stats)
+        if include_rhis_stats:
+            self.rhis_stats_included = True
 
-        logger.info("RHIS evolution successfully complete.")
-        return self.rhis_statistic_df[evol_cols] if self.rhis_statistic_df is not None else self.rhis_full_df[evol_cols]
+        logger.info("RHIS completed successfully.")
+        self.is_rhis_complete = True
 
-
-    def _ts_evol(self, ts: Series):
-        ts_arr = ts.to_numpy()
-        if self.backwards:
-            ts_arr = ts_arr[::-1]
-
-        evol = rhis_standard_evol(ts_arr, self.alpha, self.slice_init, self.stat, backwards=self.backwards)
-
-        if self.stat is None:
-            for hyp, ps in evol.items():
-                self.rhis_full_df[(ts.name, self.direction, hyp)] = ps
-        else:
-            self.rhis_statistic_df[(ts.name, self.direction)] = evol
+        return self.rhis_df
 
 
-    def add_rhis_compliant_to_df(self, target_hyp: RhisCode | None=None) -> DataFrame:
-        validate_or_raise_rhis_statistic_evol_not_called(self.rhis_statistic_df, self.stat)
-        validate_or_raise_rhis_full_evol_not_called(self.rhis_full_df, self.stat)
-        validate_or_raise_target_hyp_param_incorrect(target_hyp, self.stat)
+    def add_rhis_compliant_to_df(self, rhis_stat: RhisStat | RhisCode) -> DataFrame:
+        raise_if_no_rhis_run(is_rhis_complete=self.is_rhis_complete)
+        cols_orig_df = self.orig_df.columns
+        if rhis_stat in ['min', 'max', 'mean', 'median'] and not self.rhis_stats_included:
+            print("passes")
+            self._include_rhis_stats_in_df(self.rhis_df)
 
-        original_cols = self.orig_df.columns
-        for original_col in original_cols:
-            target_df = self.rhis_full_df if self.stat is None else self.rhis_statistic_df
-            target_col = (
-                (original_col, self.direction, target_hyp.upper())
-                if self.stat is None
-                else (original_col, self.direction)
-            )
+        for col in cols_orig_df:
+            target_col = (col, rhis_stat)
+            rhis_series = self.rhis_df[target_col].to_numpy()
+            cut_idxs = self._retrieve_rhis_ts_idxs(rhis_series, self.alpha, self.length_init_ts)
+            self._include_rhis_compliant_ts_in_df(self.orig_df, cut_idxs, col)
 
-            rhis_series = target_df[target_col].to_numpy()
-            cut_idxs = representative_slice_idxs(rhis_series, self.alpha, self.slice_init, self.backwards)
-            insert_repr_in_df_from_idx(self.orig_df, cut_idxs, original_col)
-
-        logger.info("Representative data successfully added.")
+        logger.info("RHIS compliant data successfully included in the dataframe.")
         return self.orig_df
-
-
-    @validate_plot_params
-    def plot(
-            self,
-            col_name: str|None=None,
-            save_dir_path: str | None=None,
-            save_format: str | None='png',*,
-            rhis: bool=False,
-            show_repr: bool=True,
-            **kwargs
-            ):
-        try:
-            validate_or_raise_rhis_statistic_evol_not_called(self.rhis_statistic_df, self.stat)
-            validate_or_raise_rhis_full_evol_not_called(self.rhis_full_df, self.stat)
-            if rhis:
-                validate_or_raise_plot_rhis_full_with_stat_defined(self.rhis_full_df, self.stat)
-
-            cols = [col_name,]
-
-            if col_name is None:
-                cols = (
-                    {col for col, _, _ in self.rhis_full_df.columns}
-                    if self.stat is None
-                    else {col for col, _ in self.rhis_statistic_df.columns}
-                )
-            elif col_name not in self.orig_df.columns.values:
-                msg = f"The name '{col_name}' is not a valid column."
-                raise ValueError(msg)
-
-            for col in cols:
-                evol_ax = plot_rhis_evol(
-                    col,
-                    self.rhis_statistic_df,
-                    self.rhis_full_df,
-                    self.direction,
-                    kwargs.get('figsize'),
-                    kwargs.get('xlabel'),
-                    kwargs.get('rhis_params'),
-                    kwargs.get('rhis_stat_params'),
-                    rhis=rhis
-                    )
-                data_ax = plot_data(
-                    evol_ax,
-                    col,
-                    self.orig_df,
-                    kwargs.get('ylabel'),
-                    kwargs.get('data_params'),
-                    kwargs.get('repr_params'),
-                    show_repr=show_repr
-                    )
-                filename = 'rhis_evol_' + col.lower().strip() + '.' + save_format
-                filename_clean = filename.replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
-                col_save_path = filename if save_dir_path is None else f'{save_dir_path}{filename_clean}'
-                finalize_plot(
-                    evol_ax,
-                    data_ax,
-                    self.alpha,
-                    kwargs.get('figtitle'),
-                    kwargs.get('alpha_line_params'),
-                    col_save_path
-                    )
-
-        except (PlotRhisFullWithStatDefinedError, RhisEvolNotCalledError, ValueError) as exc:
-            logger.exception(exc)
 
 if __name__ == '__main__':
 
@@ -206,8 +184,8 @@ if __name__ == '__main__':
     df.set_index('Time', inplace=True)
 
     rhis = Rhis(df)
-    rhis.evol(stat='min')
-    rhis.add_rhis_compliant_to_df()
-    rhis.plot(rhis=False)
-    print(rhis.orig_df.head(10))
-    print(rhis.orig_df.tail(10))
+    rhis.evol(include_rhis_stats=False)
+    rhis.add_rhis_compliant_to_df('min')
+    print(rhis.orig_df.info())
+    print(rhis.rhis_df.info())
+

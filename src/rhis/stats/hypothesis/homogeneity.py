@@ -7,7 +7,7 @@ import numpy as np
 import scipy.stats as sts
 
 from rhis.stats.utils.ranks import ranks_ties_corrected
-from rhis.utils.data import break_list_in_equal_parts
+from rhis.utils.data import split_into_parts
 
 if TYPE_CHECKING:
     from rhis.custom_types.stats import TestResults
@@ -79,7 +79,7 @@ def mann_whitney(  # noqa: PLR0913
             hypothesis was reject.
     """
     if y is None:
-        data = break_list_in_equal_parts(x, 2)
+        data = split_into_parts(x, 2)
         x = data[0]
         y = data[1]
 
@@ -136,9 +136,5 @@ def mann_whitney(  # noqa: PLR0913
 
 
 if __name__ == "__main__":
-    from rhis.utils.data import slices_to_evol
-
-    data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
-    tss = slices_to_evol(data)
-    for ts in tss:
-        print(mann_whitney(ts).p_value)
+    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    print(mann_whitney(ts).p_value)

@@ -13,3 +13,4 @@ class TestResults(NamedTuple):
     alternative: str
 
 RhisCode: TypeAlias = Literal["r", "h", "i", "s"]
+RhisStat: TypeAlias = Literal["min", "median", "mean", "max"]

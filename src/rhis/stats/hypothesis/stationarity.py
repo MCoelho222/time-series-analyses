@@ -88,3 +88,6 @@ def mann_kendall(
     Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     return Results(test_s, round(p, 4), reject, alternative)
 
+if __name__ == "__main__":
+    ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]
+    print(mann_kendall(ts).p_value)
