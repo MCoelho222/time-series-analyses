@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis.stats.utils import ranks_ties_corrected
+from rhis.utils import ranks_ties_corrected
 
 if TYPE_CHECKING:
     from rhis.custom_types import TestResults, TimeSeriesFlex

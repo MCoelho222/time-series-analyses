@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.rhis.hypothesis_tests.mann_whitney import mann_whitney
+from src.rhis.hypothesis import mann_whitney
 
 
 def test_mann_whitney():
@@ -25,7 +25,7 @@ def test_mann_whitney():
     expected_stat = 23.5
     expected_p = 0.0246
 
-    result = mann_whitney(x, y, alternative='greater')
+    result = mann_whitney(x=x, y=y, alternative='greater')
 
     assert np.median(np.array(x)) == median_x
     assert np.median(np.array(y)) == median_y

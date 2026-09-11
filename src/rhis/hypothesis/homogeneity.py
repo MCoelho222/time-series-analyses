@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats as sts
 
-from rhis.stats.utils import ranks_ties_corrected
+from rhis.utils import ranks_ties_corrected
 from rhis.utils.data import split_into_parts
 
 if TYPE_CHECKING:

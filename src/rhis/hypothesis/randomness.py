@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rhis.stats.utils import test_decision_normal
+from rhis.utils import test_decision_normal
 
 if TYPE_CHECKING:
     from rhis.custom_types import TestResults, TimeSeriesFlex

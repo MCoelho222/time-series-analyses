@@ -8,10 +8,10 @@ from loguru import logger
 from pandas import DataFrame, Index
 
 from rhis.exceptions import raise_if_no_rhis_run
-from rhis.stats.hypothesis.homogeneity import mann_whitney
-from rhis.stats.hypothesis.independence import wald_wolfowitz
-from rhis.stats.hypothesis.randomness import wallismoore
-from rhis.stats.hypothesis.stationarity import mann_kendall
+from rhis.hypothesis.homogeneity import mann_whitney
+from rhis.hypothesis.independence import wald_wolfowitz
+from rhis.hypothesis.randomness import wallismoore
+from rhis.hypothesis.stationarity import mann_kendall
 from rhis.utils import clean_numeric_array, nans_nums_from_array, slice_init, slices_to_evol
 
 if TYPE_CHECKING:
