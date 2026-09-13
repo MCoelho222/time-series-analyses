@@ -121,7 +121,12 @@ class Rhis:
 
 
     def _add_rhis_stats_to_evol(self, evol_dict: dict[str, list[float]]) -> dict[str, list[float]]:
-        stats_dict: dict[str, Callable[..., NDArray[np.float64]]] = {'min': np.min, 'med': np.median, 'avg': np.mean, 'max': np.max}
+        stats_dict: dict[str, Callable[..., NDArray[np.float64]]] = {
+            'min': np.min,
+            'med': np.median,
+            'avg': np.mean,
+            'max': np.max,
+        }
         for name, method in stats_dict.items():
             evol_dict[name] = list(method(list(evol_dict.values()), axis=0, keepdims=True).ravel())
 
@@ -142,7 +147,13 @@ class Rhis:
             self.rhis_df[(ts.name, hyp)] = ps
 
 
-    def evol(self, cols: list[str] | None = None, length_init_ts: int | None = None,*, include_rhis_stats: bool = True) -> DataFrame:
+    def evol(
+        self,
+        cols: list[str] | None = None,
+        length_init_ts: int | None = None,
+        *,
+        include_rhis_stats: bool = True,
+    ) -> DataFrame:
         """
         Generate a dataframe (self.rhis_statistic_df or self.rhis_full_df) with the series from
         the evolutional application of the randomness, homogeneity, independence and
