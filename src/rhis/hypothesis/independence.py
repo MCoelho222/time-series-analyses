@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.stats as sts
 
+from rhis.custom_types import WaldWolfowitzResults
 from rhis.utils import ranks_ties_corrected, to_ranks
 
 if TYPE_CHECKING:
-    from rhis.custom_types import TestResults, TimeSeriesFlex
+    from rhis.custom_types import TimeSeriesFlex
 
 
 def wald_wolfowitz(
@@ -17,7 +17,7 @@ def wald_wolfowitz(
         alpha: float = 0.05,*,
         on_ranks: bool = False,
         ties: bool = True,
-        ) -> TestResults:
+        ) -> WaldWolfowitzResults:
     """
     Wald & Wolfowitz test for serial correlation.
 
@@ -42,19 +42,17 @@ def wald_wolfowitz(
     Return
     ------
         A namedtuple
-            ('Wald_Wolfowitz', ['statistic', 'p_value', 'reject'])
+            ('WaldWolfowitzResults', ['statistic', 'p_value', 'reject'])
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
     """
     arr = np.array(ts)
-
-    Results = namedtuple('WaldWolfovitz', ['statistic', 'p_value', 'reject'])  # noqa: PYI024
     if np.all(arr == arr[0]):
         reject = True
-        return Results(0, 0., reject)
+        return WaldWolfowitzResults(0, 0., reject)
 
     if on_ranks and not ties:
-        arr = to_ranks(arr)
+        arr = np.array(to_ranks(arr))
     if on_ranks and ties:
         arr = ranks_ties_corrected(arr)
 
@@ -77,14 +75,14 @@ def wald_wolfowitz(
     var_lim = 0.00001
     if abs(var_r) < var_lim:
         reject = True
-        return Results(0, 0., reject)
+        return WaldWolfowitzResults(0, 0., reject)
 
     z = abs((r - e_r) / np.sqrt(var_r))
     p = 2 * (1 - sts.norm.cdf(z))
 
     reject = p < alpha
 
-    return Results(r, round(p, 4), reject)
+    return WaldWolfowitzResults(r, round(p, 4), reject)
 
 if __name__ == "__main__":
     ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]

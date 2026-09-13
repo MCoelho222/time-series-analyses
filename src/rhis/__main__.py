@@ -84,21 +84,23 @@ def main() -> None:
     rhis_df = rhis.rhis_df
     alpha = rhis.alpha
 
-    plot_rhis(orig_df, rhis_df, orig_cols, alpha)
+    if rhis_df is not None:
+        plot_rhis(orig_df, rhis_df, orig_cols, alpha)
 
-    repr_cols = ['series_A_repr', 'series_B_repr', 'series_C_repr', 'series_D_repr']
-    repr_df = rhis.orig_df[repr_cols]
-    repr_df_cols = repr_df.columns
+        repr_cols = ['series_A_repr', 'series_B_repr', 'series_C_repr', 'series_D_repr']
+        repr_df = rhis.orig_df[repr_cols]
+        repr_df_cols = repr_df.columns
 
-    repr_rhis = Rhis(repr_df)
-    repr_rhis.evol()
-    repr_rhis.add_rhis_compliant_to_df()
+        repr_rhis = Rhis(repr_df)
+        repr_rhis.evol()
+        repr_rhis.add_rhis_compliant_to_df()
 
-    repr_orig_df = repr_rhis.orig_df
-    repr_rhis_df = repr_rhis.rhis_df
-    repr_alpha = repr_rhis.alpha
+        repr_orig_df = repr_rhis.orig_df
+        repr_rhis_df = repr_rhis.rhis_df
+        repr_alpha = repr_rhis.alpha
 
-    plot_rhis(repr_orig_df, repr_rhis_df, repr_df_cols, repr_alpha)
+        if repr_rhis_df is not None:
+            plot_rhis(repr_orig_df, repr_rhis_df, repr_df_cols, repr_alpha)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 """Methods for ties correction."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
 
@@ -42,6 +42,33 @@ def get_ties_index(ts: TimeSeriesFlex, start: int = 0) -> list[int]:
         tie_ranks.append(tie_ranks[-1] + 1)
 
     return tie_ranks
+
+
+@overload
+def ranks_ties_corrected(
+    ts: TimeSeriesFlex,
+    *,
+    ties_data: Literal[True],
+) -> TiesData:
+    ...
+
+
+@overload
+def ranks_ties_corrected(
+    ts: TimeSeriesFlex,
+    *,
+    ties_data: Literal[False] = False,
+) -> NDArray[np.int64 | np.float64]:
+    ...
+
+
+@overload
+def ranks_ties_corrected(
+    ts: TimeSeriesFlex,
+    *,
+    ties_data: bool,
+) -> NDArray[np.int64 | np.float64] | TiesData:
+    ...
 
 
 def ranks_ties_corrected(  # noqa: C901

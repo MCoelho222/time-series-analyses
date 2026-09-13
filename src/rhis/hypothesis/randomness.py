@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from rhis.custom_types import RunsTestResults, WallisMooreResults
 from rhis.utils import test_decision_normal
 
 if TYPE_CHECKING:
-    from rhis.custom_types import TestResults, TimeSeriesFlex
+    from rhis.custom_types import TimeSeriesFlex
 
 
 def runs_test(  # noqa: C901
@@ -16,7 +16,7 @@ def runs_test(  # noqa: C901
         alpha: float = 0.05,
         alternative: str = 'two-sided',*,
         continuity: bool = True
-        ) -> TestResults:
+        ) -> RunsTestResults:
     """
     Apply the Single-Sample Runs Test in on a time series. Uses the median as a
     criteria for defining runs (up or down).
@@ -58,7 +58,7 @@ def runs_test(  # noqa: C901
     Return
     ------
         A namedtuple
-            ('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])
+            ('RunsTestResults', ['statistic', 'p_value', 'reject', 'alternative'])
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
     """
@@ -76,10 +76,9 @@ def runs_test(  # noqa: C901
         if element < median:
             signs.append(-1)
 
-    Results = namedtuple('Runs_Test', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if not signs:
         reject = True
-        return Results(0, 0.0, reject, alternative)
+        return RunsTestResults(0, 0.0, reject, alternative)
 
     for i in range(1, len(signs)):
         el = signs[i]
@@ -113,17 +112,17 @@ def runs_test(  # noqa: C901
         z = num_z / ((var_num / var_den) ** 0.5)
     except ZeroDivisionError:
         reject = True
-        return Results(0, 0.0, reject, alternative)
+        return RunsTestResults(0, 0.0, reject, alternative)
 
     decision = test_decision_normal(stat, stat_mean, z, alternative, alpha)
-    return Results(stat, round(decision.p_value, 4), decision.reject, alternative)
+    return RunsTestResults(stat, round(decision.p_value, 4), decision.reject, alternative)
 
 
 def wallismoore(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,
         alternative: str = 'two-sided',
-    ) -> TestResults:
+    ) -> WallisMooreResults:
     """
     Applies the Wallis and Moore (1941) runtest for randomness.
 
@@ -146,15 +145,14 @@ def wallismoore(
     Return
     -------
         A namedtuple
-            ('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])
+            ('WallisMooreResults', ['statistic', 'p_value', 'reject', 'alternative'])
             The parameter 'reject' is of type bool. 'True' means the null hypothesis
             was reject.
     """
     ts_arr = np.array(ts)
-    Results = namedtuple('WallisMooreResult', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if np.all(ts_arr == ts_arr[0]):
         reject = True
-        return Results(0, 0., reject, alternative)
+        return WallisMooreResults(0, 0., reject, alternative)
 
     #Group 1 (pluses for zeros)
     signs1 = []
@@ -210,7 +208,7 @@ def wallismoore(
     z = (runs - expected_runs) / sigma
 
     decision = test_decision_normal(runs, expected_runs, z, alternative, alpha)
-    return Results(runs, round(decision.p_value, 4), decision.reject, alternative)
+    return WallisMooreResults(runs, round(decision.p_value, 4), decision.reject, alternative)
 
 
 if __name__ == "__main__":

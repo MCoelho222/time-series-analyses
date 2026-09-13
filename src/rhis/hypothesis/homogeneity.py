@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.stats as sts
 
-from rhis.utils import ranks_ties_corrected
-from rhis.utils.data import split_into_parts
+from rhis.custom_types import MannWhitneyResults
+from rhis.utils import ranks_ties_corrected, split_into_parts
 
 if TYPE_CHECKING:
-    from rhis.custom_types import TestResults, TimeSeriesFlex
+    from rhis.custom_types import TimeSeriesFlex
 
 
 def mann_whitney(  # noqa: PLR0913
@@ -21,7 +20,7 @@ def mann_whitney(  # noqa: PLR0913
         *,
         continuity: bool = True,
         ties: bool = True,
-        ) -> TestResults:
+        ) -> MannWhitneyResults:
     """
     Compare two independent groups of data using the Mann-Whitney U test.
 
@@ -74,7 +73,7 @@ def mann_whitney(  # noqa: PLR0913
     Returns
     -------
         A namedtuple
-            ('MannWhitney', ['statistic', 'p_value', 'reject'])
+            ('MannWhitneyResults', ['statistic', 'p_value', 'reject'])
             The parameter 'reject' is of type bool. 'True' means the null
             hypothesis was reject.
     """
@@ -83,16 +82,15 @@ def mann_whitney(  # noqa: PLR0913
         x = data[0]
         y = data[1]
 
-    g1 = x[:] if isinstance(x, list) else x[:].tolist()
-    g2 = y[:] if isinstance(y, list) else y[:].tolist()
+    g1 = list(x)
+    g2 = list(y)
 
     gs_concat = g1 + g2
     gs_sorted = np.sort(gs_concat)
 
-    Results = namedtuple('MannWhitney', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
     if np.all(gs_sorted == gs_sorted[0]):
         reject = False
-        return Results(0, 1., reject, alternative)
+        return MannWhitneyResults(0, 1., reject, alternative)
 
     n = len(gs_concat)
     ranks = np.sort(ranks_ties_corrected(gs_concat)) if ties else [i + 1 for i in range(n)]
@@ -132,7 +130,7 @@ def mann_whitney(  # noqa: PLR0913
     if alternative == 'greater':
         reject = rank_sum1 > rank_sum2 and p < alpha
 
-    return Results(stat, round(p, 4), reject, alternative)
+    return MannWhitneyResults(stat, round(p, 4), reject, alternative)
 
 
 if __name__ == "__main__":

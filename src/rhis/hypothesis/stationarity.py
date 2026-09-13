@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.stats as sts
 
+from rhis.custom_types import MannKendallResults
 from rhis.utils import ranks_ties_corrected
 
 if TYPE_CHECKING:
-    from rhis.custom_types import TestResults, TimeSeriesFlex
+    from rhis.custom_types import TimeSeriesFlex
 
 
 def mann_kendall(
         ts: TimeSeriesFlex,
         alpha: float = 0.05,
         alternative: str = 'two-sided',
-    ) -> TestResults:
+    ) -> MannKendallResults:
     """
     Apply the Mann-Kendall test using the normal approximation,
     which is valid for series with 10 or more elements (GILBERT, 1987).
@@ -44,7 +44,7 @@ def mann_kendall(
     Return
     ------
         namedtuple
-            ('Mann_Kendall', ['statistic', 'p_value', 'reject'])
+            ('MannKendallResults', ['statistic', 'p_value', 'reject'])
 
             'reject' is boolean. If True, the null hypothesis was reject.
     """
@@ -85,8 +85,7 @@ def mann_kendall(
     if alternative == 'greater':
         reject = test_s > condition_value and p < alpha
 
-    Results = namedtuple('Mann_Kendall', ['statistic', 'p_value', 'reject', 'alternative'])  # noqa: PYI024
-    return Results(test_s, round(p, 4), reject, alternative)
+    return MannKendallResults(test_s, round(p, 4), reject, alternative)
 
 if __name__ == "__main__":
     ts = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 5, 3, 10, 9, 9.5, 3.4, 5.7, 2.5, 7, 4.3, 11]

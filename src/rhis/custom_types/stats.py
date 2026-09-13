@@ -3,15 +3,42 @@ from __future__ import annotations
 
 from typing import Literal, NamedTuple, TypeAlias
 
-
-class TestResults(NamedTuple):
-    """Types for hypothesis test results."""
-    statistic: float
-    p_value: float
-    alternative: str
-
 RhisCode: TypeAlias = Literal["r", "h", "i", "s"]
 RhisStat: TypeAlias = Literal["min", "median", "mean", "max"]
+
+
+class MannWhitneyResults(NamedTuple):
+    statistic: float
+    p_value: float
+    reject: bool
+    alternative: str
+
+
+class WaldWolfowitzResults(NamedTuple):
+    statistic: float
+    p_value: float
+    reject: bool
+
+
+class RunsTestResults(NamedTuple):
+    statistic: float
+    p_value: float
+    reject: bool
+    alternative: str
+
+
+class WallisMooreResults(NamedTuple):
+    statistic: float
+    p_value: float
+    reject: bool
+    alternative: str
+
+
+class MannKendallResults(NamedTuple):
+    statistic: float
+    p_value: float
+    reject: bool
+    alternative: str
 
 
 class TestDecisionNormal(NamedTuple):

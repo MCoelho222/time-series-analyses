@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from numpy.typing import NDArray
 
+    from rhis.custom_types import TimeSeriesFlex
 
-def clean_numeric_array(values: Iterable[object]) -> NDArray[np.float64]:
+
+def clean_numeric_array(values: TimeSeriesFlex) -> NDArray[np.float64]:
     """Return finite numeric values from an arbitrary iterable."""
     numeric_values = []
     for value in values:
@@ -31,16 +31,14 @@ def clean_numeric_array(values: Iterable[object]) -> NDArray[np.float64]:
 
 
 def nans_nums_from_array(
-    ps: NDArray[np.int64 | np.float64], *, only_nums: bool = True
-) -> NDArray[np.int64 | np.float64] | tuple[
-    NDArray[np.int64 | np.float64], NDArray[np.int64 | np.float64]
-]:
-    ps_mask = np.isnan(ps)
-    ps_nums = ps[~ps_mask]
+    pvalue_ts: NDArray[np.float64], *, only_nums: bool = True
+) -> NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]]:
+    pvalue_ts_mask = np.isnan(pvalue_ts)
+    pvalue_ts_nums = pvalue_ts[~pvalue_ts_mask]
 
     if only_nums:
-        return ps_nums
+        return pvalue_ts_nums
 
-    ps_nan = ps[ps_mask]
+    pvalue_ts_nan = pvalue_ts[pvalue_ts_mask]
 
-    return ps_nums, ps_nan
+    return pvalue_ts_nums, pvalue_ts_nan
