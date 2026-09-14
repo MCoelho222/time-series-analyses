@@ -14,9 +14,9 @@ When this trend is statistically confirmed, a strategy for data selection or tre
 
 When determining whether a time series is representative, the first step is to apply the RHIS tests to the complete time series. If one or more hypotheses are rejected, one possible strategy is to select a period within the time series that better represents the current conditions.
 
-However, the goal is to retain as much information as possible, so the longest RHIS-compliant period should be selected. This means that the data selection process requires testing the RHIS hypotheses each time a new observation is added to the selected period. This is where this program comes in.
+However, the goal is to retain as much information as possible, so the longest RHIS-compliant period as possible should be selected. This means that the data selection process requires testing the RHIS hypotheses each time a new observation is added to the selected period, starting from the most recent. This is where this program comes in.
 
-The program provides a method for applying the RHIS tests to a time series with an increasing number of observations. The analysis starts with a small number of observations, such as the first 5 or 10, and then adds one observation at a time. The RHIS tests are performed each time the number of observations increases.
+The program provides a method for applying the RHIS tests to a time series with an increasing number of observations. The analysis starts with a small number of the most recent observations, such as the first 5 or 10, and then adds one observation at a time. The RHIS tests are performed each time the number of observations increases.
 
 When the test results are plotted sequentially, it becomes possible to identify the point at which the data first become fully compliant with the RHIS hypotheses. If a representative period exists, this point can be used as a boundary for selecting the data. In this way, the method identifies the longest period that satisfies all RHIS requirements while retaining as much information as possible.
 
@@ -91,5 +91,3 @@ rhis.plot()
 In this example, the RHIS evolution was used to select a representative slice of the original time series in a dataframe. The selected slices (black painted dots) are compliant with the hypotheses of randomness, homogeneity, independence, and stationarity. The selected slice is appropriate for using in statistical methods, such as mean, standard deviation, and others.
 
 The dashed grey line represents the forward evolution of the minimum value among the four p-values from RHIS. The first value is the result from the application of the **RHIS** tests on the first 5 values and taken the minimum, and the last one is the result from the application on the entire time series.
-
-![RHISEvolution](src/rhis/examples/rhis_evol.png)
